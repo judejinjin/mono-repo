@@ -1,0 +1,89 @@
+# Airflow Helm Values for Development Environment
+
+nameOverride: airflow-dev
+fullnameOverride: airflow-dev
+
+airflow:
+  version: "2.7.0"
+  executor: KubernetesExecutor
+  
+  # Airflow configuration
+  config:
+    AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: "False"
+    AIRFLOW__CORE__LOAD_EXAMPLES: "False"
+    AIRFLOW__WEBSERVER__EXPOSE_CONFIG: "True"
+    AIRFLOW__KUBERNETES__NAMESPACE: "airflow-dev"
+    AIRFLOW__API__AUTH_BACKENDS: "airflow.api.auth.backend.basic_auth,airflow.api.auth.backend.session"
+    AIRFLOW__WEBSERVER__AUTHENTICATE: "True"
+    AIRFLOW__WEBSERVER__AUTH_BACKEND: "airflow.auth.backends.password_auth"
+    
+env:
+  - name: ENV
+    value: "dev"
+
+# Web server configuration
+webserver:
+  replicas: 1
+  service:
+    type: LoadBalancer
+    port: 8080
+    annotations:
+      service.beta.kubernetes.io/aws-load-balancer-type: "nlb-ip"
+      service.beta.kubernetes.io/aws-load-balancer-internal: "true"
+      service.beta.kubernetes.io/aws-load-balancer-backend-protocol: "http"
+  
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+# Scheduler configuration
+scheduler:
+  replicas: 1
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+# Worker configuration (KubernetesExecutor)
+workers:
+  replicas: 0  # Using KubernetesExecutor
+  
+# DAGs storage
+dags:
+  persistence:
+    enabled: false
+  gitSync:
+    enabled: true
+    repo: https://github.com/your-org/mono-repo.git
+    branch: main
+    subPath: dags
+    wait: 60
+
+# Database (use external PostgreSQL)
+postgresql:
+  enabled: false
+
+externalDatabase:
+  type: postgresql
+  host: riskdb-dev.cluster-xyz.us-east-1.rds.amazonaws.com
+  port: 5432
+  database: airflow_dev
+  user: airflow
+  passwordSecret: airflow-db-secret
+  passwordSecretKey: password
+
+# Redis (for KubernetesExecutor, we don't need Redis)
+redis:
+  enabled: false
+
+# Service account
+serviceAccount:
+  create: true
+  name: airflow-dev

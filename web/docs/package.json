@@ -1,0 +1,25 @@
+{
+  "name": "genai-docs",
+  "version": "1.0.0",
+  "description": "GenAI Documentation Site - API documentation and user guides",
+  "private": true,
+  "scripts": {
+    "dev": "vitepress dev",
+    "build": "vitepress build",
+    "preview": "vitepress preview",
+    "test": "echo \"No tests for docs site\"",
+    "lint": "eslint . --ext js,ts,vue --report-unused-disable-directives --max-warnings 0"
+  },
+  "dependencies": {
+    "vue": "^3.3.4"
+  },
+  "devDependencies": {
+    "vitepress": "^1.0.0-rc.4",
+    "@types/node": "^20.4.5",
+    "typescript": "^5.0.2",
+    "eslint": "^8.45.0",
+    "eslint-plugin-vue": "^9.15.1",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0"
+  }
+}

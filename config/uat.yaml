@@ -1,0 +1,58 @@
+# UAT Environment Configuration
+
+app:
+  debug: false
+
+logging:
+  level: "INFO"
+
+databases:
+  riskdb:
+    host: "riskdb-uat.cluster-xyz.us-east-1.rds.amazonaws.com"
+    port: 5432
+    database: "riskdb_uat"
+    secret_name: "uat/riskdb/credentials"
+    pool_size: 10
+    max_overflow: 20
+    
+  analyticsdb:
+    host: "analyticsdb-uat.cluster-abc.us-east-1.rds.amazonaws.com"
+    port: 5432
+    database: "analytics_uat"
+    secret_name: "uat/analyticsdb/credentials"
+    pool_size: 8
+    max_overflow: 15
+    
+  snowflakedb:
+    account: "uat-snowflake-account"
+    warehouse: "UAT_WH"
+    database: "UAT_DB"
+    schema: "PUBLIC"
+    secret_name: "uat/snowflake/credentials"
+    pool_size: 5
+    max_overflow: 15
+
+cloud:
+  s3:
+    default_bucket: "mono-repo-storage-uat"
+    
+  secrets_manager:
+    prefix: "uat/"
+
+airflow:
+  webserver_port: 8080
+  executor: "KubernetesExecutor"
+  namespace: "airflow-uat"
+  
+fastapi:
+  port: 8000
+  reload: false
+  workers: 3
+
+dash:
+  port: 8050
+  debug: false
+
+web:
+  port: 3000
+  api_base_url: "https://api-uat.monorepo.com"

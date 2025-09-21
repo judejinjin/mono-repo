@@ -1,0 +1,66 @@
+# Base Configuration
+# This configuration applies to all environments
+
+app:
+  name: "mono-repo-project"
+  version: "1.0.0"
+  debug: false
+
+logging:
+  level: "INFO"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  handlers:
+    - type: "console"
+    - type: "file"
+      filename: "app.log"
+
+databases:
+  riskdb:
+    engine: "postgresql"
+    pool_size: 10
+    max_overflow: 20
+    pool_timeout: 30
+    use_secrets_manager: true
+    
+  analyticsdb:
+    engine: "postgresql"
+    pool_size: 5
+    max_overflow: 10
+    pool_timeout: 30
+    use_secrets_manager: true
+    
+  snowflakedb:
+    engine: "snowflake"
+    pool_size: 5
+    max_overflow: 15
+    pool_timeout: 60
+    use_secrets_manager: true
+
+cloud:
+  aws:
+    region: "us-east-1"
+  
+  s3:
+    default_bucket: "mono-repo-storage"
+    
+  secrets_manager:
+    region: "us-east-1"
+
+airflow:
+  default_args:
+    owner: "data-team"
+    depends_on_past: false
+    start_date: "2025-01-01"
+    email_on_failure: true
+    email_on_retry: false
+    retries: 1
+    retry_delay: 300  # 5 minutes
+
+fastapi:
+  host: "0.0.0.0"
+  workers: 4
+  reload: false
+
+dash:
+  host: "0.0.0.0"
+  debug: false

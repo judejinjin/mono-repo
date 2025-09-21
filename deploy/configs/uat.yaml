@@ -1,0 +1,58 @@
+# UAT Deployment Configuration
+
+image_tag: "uat-latest"
+
+# Container Registry Configuration
+registry:
+  url: "jfrog.corporate.local"
+  dockerconfigjson: "${JFROG_DOCKER_CONFIG_JSON}"
+
+infrastructure:
+  vpc_cidr: "10.1.0.0/16"
+  availability_zones: ["us-east-1a", "us-east-1b"]
+  
+kubernetes:
+  namespace: "mono-repo-uat"
+  replicas:
+    fastapi: 2
+    web: 2
+    dash: 1
+    
+databases:
+  rds:
+    instance_class: "db.t3.small"
+    allocated_storage: 50
+  snowflake:
+    warehouse_size: "SMALL"
+    auto_suspend: 300  # 5 minutes
+    
+monitoring:
+  enabled: true
+  retention_days: 30
+  
+security:
+  ssl_enabled: true
+  vpc_flow_logs: true
+
+resources:
+  fastapi:
+    cpu: "200m"
+    memory: "512Mi"
+    limits:
+      cpu: "1"
+      memory: "1Gi"
+  web:
+    cpu: "100m"
+    memory: "256Mi"
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
+  dash:
+    cpu: "150m"
+    memory: "384Mi"
+    limits:
+      cpu: "500m"
+      memory: "768Mi"
+
+autoscaling:
+  enabled: false  # Manual scaling for UAT testing

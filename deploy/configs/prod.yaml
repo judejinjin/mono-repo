@@ -1,0 +1,61 @@
+# Production Deployment Configuration
+
+image_tag: "prod-latest"
+
+# Container Registry Configuration
+registry:
+  url: "jfrog.corporate.local"
+  dockerconfigjson: "${JFROG_DOCKER_CONFIG_JSON}"
+
+infrastructure:
+  vpc_cidr: "10.2.0.0/16"
+  availability_zones: ["us-east-1a", "us-east-1b", "us-east-1c"]
+  
+kubernetes:
+  namespace: "mono-repo-prod"
+  replicas:
+    fastapi: 3
+    web: 3
+    dash: 2
+    
+databases:
+  rds:
+    instance_class: "db.r5.large"
+    allocated_storage: 100
+  snowflake:
+    warehouse_size: "LARGE"
+    auto_suspend: 600  # 10 minutes
+    
+monitoring:
+  enabled: true
+  retention_days: 90
+  
+security:
+  ssl_enabled: true
+  vpc_flow_logs: true
+
+resources:
+  fastapi:
+    cpu: "500m"
+    memory: "1Gi"
+    limits:
+      cpu: "2"
+      memory: "2Gi"
+  web:
+    cpu: "200m"
+    memory: "512Mi"
+    limits:
+      cpu: "1"
+      memory: "1Gi"
+  dash:
+    cpu: "300m"
+    memory: "512Mi"
+    limits:
+      cpu: "1"
+      memory: "1Gi"
+
+autoscaling:
+  enabled: true
+  min_replicas: 2
+  max_replicas: 10
+  target_cpu_utilization: 70

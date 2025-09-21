@@ -1,0 +1,58 @@
+# Production Environment Configuration
+
+app:
+  debug: false
+
+logging:
+  level: "WARNING"
+
+databases:
+  riskdb:
+    host: "riskdb-prod.cluster-xyz.us-east-1.rds.amazonaws.com"
+    port: 5432
+    database: "riskdb_prod"
+    secret_name: "prod/riskdb/credentials"
+    pool_size: 20
+    max_overflow: 40
+    
+  analyticsdb:
+    host: "analyticsdb-prod.cluster-abc.us-east-1.rds.amazonaws.com"
+    port: 5432
+    database: "analytics_prod"
+    secret_name: "prod/analyticsdb/credentials"
+    pool_size: 15
+    max_overflow: 30
+    
+  snowflakedb:
+    account: "prod-snowflake-account"
+    warehouse: "PROD_WH"
+    database: "PROD_DB"
+    schema: "PUBLIC"
+    secret_name: "prod/snowflake/credentials"
+    pool_size: 10
+    max_overflow: 25
+
+cloud:
+  s3:
+    default_bucket: "mono-repo-storage-prod"
+    
+  secrets_manager:
+    prefix: "prod/"
+
+airflow:
+  webserver_port: 8080
+  executor: "KubernetesExecutor"
+  namespace: "airflow-prod"
+  
+fastapi:
+  port: 8000
+  reload: false
+  workers: 8
+
+dash:
+  port: 8050
+  debug: false
+
+web:
+  port: 3000
+  api_base_url: "https://api.monorepo.com"

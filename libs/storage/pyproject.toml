@@ -1,0 +1,116 @@
+[build-system]
+requires = ["setuptools>=45", "wheel", "setuptools_scm>=6.2"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "genai-storage"
+version = "0.1.0"
+description = "Storage and data access library for GenAI mono-repo"
+readme = "README.md"
+license = {text = "MIT"}
+authors = [
+    {name = "GenAI Team", email = "team@genai.com"}
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+]
+requires-python = ">=3.9"
+dependencies = [
+    "sqlalchemy>=2.0.0",
+    "alembic>=1.11.0",
+    "psycopg2-binary>=2.9.7",
+    "asyncpg>=0.28.0",
+    "redis>=4.6.0",
+    "boto3>=1.28.0",
+    "botocore>=1.31.0",
+    "pydantic>=2.0.0",
+    "pydantic-settings>=2.0.0",
+    "s3fs>=2023.6.0",
+    "pandas>=2.0.0",
+    "pyarrow>=12.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-asyncio>=0.21.0",
+    "pytest-cov>=4.1.0",
+    "black>=23.7.0",
+    "isort>=5.12.0",
+    "flake8>=6.0.0",
+    "mypy>=1.5.0",
+    "sqlalchemy-stubs>=0.4",
+]
+test = [
+    "pytest>=7.4.0",
+    "pytest-asyncio>=0.21.0",
+    "pytest-cov>=4.1.0",
+    "pytest-postgresql>=5.0.0",
+    "faker>=19.3.0",
+    "moto[s3]>=4.2.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/genai/mono-repo"
+Repository = "https://github.com/genai/mono-repo"
+Issues = "https://github.com/genai/mono-repo/issues"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["genai_storage*"]
+
+[tool.setuptools.package-data]
+genai_storage = ["py.typed"]
+
+[tool.black]
+line-length = 88
+target-version = ['py39', 'py310', 'py311']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | build
+  | dist
+)/
+'''
+
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+line_length = 88
+known_first_party = ["genai_storage"]
+
+[tool.mypy]
+python_version = "3.9"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+warn_unreachable = true
+strict_equality = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-v --cov=genai_storage --cov-report=term-missing --cov-report=html"
+asyncio_mode = "auto"

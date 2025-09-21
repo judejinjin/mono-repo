@@ -1,0 +1,52 @@
+# Development Environment Configuration
+
+app:
+  debug: true
+
+logging:
+  level: "DEBUG"
+
+databases:
+  riskdb:
+    host: "riskdb-dev.cluster-xyz.us-east-1.rds.amazonaws.com"
+    port: 5432
+    database: "riskdb_dev"
+    secret_name: "dev/riskdb/credentials"
+    
+  analyticsdb:
+    host: "analyticsdb-dev.cluster-abc.us-east-1.rds.amazonaws.com"
+    port: 5432
+    database: "analytics_dev"
+    secret_name: "dev/analyticsdb/credentials"
+    
+  snowflakedb:
+    account: "dev-snowflake-account"
+    warehouse: "DEV_WH"
+    database: "DEV_DB"
+    schema: "PUBLIC"
+    secret_name: "dev/snowflake/credentials"
+
+cloud:
+  s3:
+    default_bucket: "mono-repo-storage-dev"
+    
+  secrets_manager:
+    prefix: "dev/"
+
+airflow:
+  webserver_port: 8080
+  executor: "KubernetesExecutor"
+  namespace: "airflow-dev"
+  
+fastapi:
+  port: 8000
+  reload: true
+  workers: 2
+
+dash:
+  port: 8050
+  debug: true
+
+web:
+  port: 3000
+  api_base_url: "https://api-dev.monorepo.com"

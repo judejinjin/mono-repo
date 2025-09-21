@@ -1,0 +1,54 @@
+{
+  "name": "genai-mono-repo",
+  "version": "1.0.0",
+  "description": "GenAI Mono Repository - Web Applications and Frontend Services",
+  "private": true,
+  "workspaces": [
+    "web/*"
+  ],
+  "scripts": {
+    "build": "npm run build:all",
+    "build:all": "npm run build:dashboard && npm run build:admin && npm run build:docs",
+    "build:dashboard": "cd web/dashboard && npm run build",
+    "build:admin": "cd web/admin && npm run build",
+    "build:docs": "cd web/docs && npm run build",
+    "dev": "concurrently \"npm run dev:dashboard\" \"npm run dev:admin\" \"npm run dev:docs\"",
+    "dev:dashboard": "cd web/dashboard && npm run dev",
+    "dev:admin": "cd web/admin && npm run dev",
+    "dev:docs": "cd web/docs && npm run dev",
+    "test": "npm run test:all",
+    "test:all": "npm run test:dashboard && npm run test:admin && npm run test:docs",
+    "test:dashboard": "cd web/dashboard && npm run test",
+    "test:admin": "cd web/admin && npm run test",
+    "test:docs": "cd web/docs && npm run test",
+    "lint": "npm run lint:all",
+    "lint:all": "npm run lint:dashboard && npm run lint:admin && npm run lint:docs",
+    "lint:dashboard": "cd web/dashboard && npm run lint",
+    "lint:admin": "cd web/admin && npm run lint",
+    "lint:docs": "cd web/docs && npm run lint",
+    "clean": "npm run clean:all",
+    "clean:all": "npm run clean:dashboard && npm run clean:admin && npm run clean:docs",
+    "clean:dashboard": "cd web/dashboard && rm -rf dist node_modules",
+    "clean:admin": "cd web/admin && rm -rf dist node_modules",
+    "clean:docs": "cd web/docs && rm -rf dist node_modules",
+    "install:all": "npm install && npm run install:dashboard && npm run install:admin && npm run install:docs",
+    "install:dashboard": "cd web/dashboard && npm install",
+    "install:admin": "cd web/admin && npm install",
+    "install:docs": "cd web/docs && npm install"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.0",
+    "cross-env": "^7.0.3",
+    "rimraf": "^5.0.1"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/genai/mono-repo.git"
+  },
+  "author": "GenAI Team",
+  "license": "MIT"
+}

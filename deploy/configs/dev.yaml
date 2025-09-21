@@ -1,0 +1,55 @@
+# Development Deployment Configuration
+
+image_tag: "dev-latest"
+
+# Container Registry Configuration
+registry:
+  url: "jfrog.corporate.local"
+  dockerconfigjson: "${JFROG_DOCKER_CONFIG_JSON}"
+
+infrastructure:
+  vpc_cidr: "10.0.0.0/16"
+  availability_zones: ["us-east-1a", "us-east-1b"]
+  
+kubernetes:
+  namespace: "mono-repo-dev"
+  replicas:
+    fastapi: 1
+    web: 1
+    dash: 1
+    
+databases:
+  rds:
+    instance_class: "db.t3.micro"
+    allocated_storage: 20
+  snowflake:
+    warehouse_size: "X-SMALL"
+    auto_suspend: 180  # 3 minutes
+    
+monitoring:
+  enabled: true
+  retention_days: 7
+  
+security:
+  ssl_enabled: false  # For development ease
+  vpc_flow_logs: false
+
+resources:
+  fastapi:
+    cpu: "100m"
+    memory: "256Mi"
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
+  web:
+    cpu: "50m"
+    memory: "128Mi"
+    limits:
+      cpu: "200m"
+      memory: "256Mi"
+  dash:
+    cpu: "100m"
+    memory: "256Mi"
+    limits:
+      cpu: "300m"
+      memory: "512Mi"

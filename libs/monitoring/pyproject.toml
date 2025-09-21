@@ -1,0 +1,116 @@
+[build-system]
+requires = ["setuptools>=45", "wheel", "setuptools_scm>=6.2"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "genai-monitoring"
+version = "0.1.0"
+description = "Monitoring, logging, and observability library for GenAI mono-repo"
+readme = "README.md"
+license = {text = "MIT"}
+authors = [
+    {name = "GenAI Team", email = "team@genai.com"}
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+]
+requires-python = ">=3.9"
+dependencies = [
+    "prometheus-client>=0.17.0",
+    "structlog>=23.1.0",
+    "opentelemetry-api>=1.19.0",
+    "opentelemetry-sdk>=1.19.0",
+    "opentelemetry-instrumentation-fastapi>=0.40b0",
+    "opentelemetry-instrumentation-sqlalchemy>=0.40b0",
+    "opentelemetry-instrumentation-redis>=0.40b0",
+    "opentelemetry-exporter-jaeger>=1.19.0",
+    "opentelemetry-exporter-prometheus>=1.12.0rc1",
+    "boto3>=1.28.0",
+    "pydantic>=2.0.0",
+    "pydantic-settings>=2.0.0",
+    "fastapi>=0.100.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-asyncio>=0.21.0",
+    "pytest-cov>=4.1.0",
+    "black>=23.7.0",
+    "isort>=5.12.0",
+    "flake8>=6.0.0",
+    "mypy>=1.5.0",
+]
+test = [
+    "pytest>=7.4.0",
+    "pytest-asyncio>=0.21.0",
+    "pytest-cov>=4.1.0",
+    "httpx>=0.24.0",
+    "faker>=19.3.0",
+    "responses>=0.23.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/genai/mono-repo"
+Repository = "https://github.com/genai/mono-repo"
+Issues = "https://github.com/genai/mono-repo/issues"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["genai_monitoring*"]
+
+[tool.setuptools.package-data]
+genai_monitoring = ["py.typed"]
+
+[tool.black]
+line-length = 88
+target-version = ['py39', 'py310', 'py311']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | build
+  | dist
+)/
+'''
+
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+line_length = 88
+known_first_party = ["genai_monitoring"]
+
+[tool.mypy]
+python_version = "3.9"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+warn_unreachable = true
+strict_equality = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-v --cov=genai_monitoring --cov-report=term-missing --cov-report=html"
+asyncio_mode = "auto"
