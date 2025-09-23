@@ -544,8 +544,8 @@ def main():
     """Generate all Airflow diagrams."""
     
     # Create output directory
-    output_dir = Path("../docs/architecture")
-    output_dir.mkdir(exist_ok=True)
+    output_dir = Path(__file__).parent.parent / "docs" / "architecture"
+    output_dir.mkdir(parents=True, exist_ok=True)
     
     print("Generating Airflow diagrams...")
     
@@ -554,21 +554,21 @@ def main():
     fig1.savefig(output_dir / "airflow_architecture.png", dpi=300, bbox_inches='tight')
     fig1.savefig(output_dir / "airflow_architecture.svg", format='svg', bbox_inches='tight')
     plt.close(fig1)
-    print("✓ Airflow architecture diagram saved (PNG + SVG)")
+    print("Airflow architecture diagram saved (PNG + SVG)")
     
     # Generate DAG management diagram
     fig2 = create_airflow_dag_management_diagram()
     fig2.savefig(output_dir / "airflow_dag_management.png", dpi=300, bbox_inches='tight')
     fig2.savefig(output_dir / "airflow_dag_management.svg", format='svg', bbox_inches='tight')
     plt.close(fig2)
-    print("✓ Airflow DAG management diagram saved (PNG + SVG)")
+    print("Airflow DAG management diagram saved (PNG + SVG)")
     
     # Generate scaling and monitoring diagram
     fig3 = create_airflow_scaling_monitoring_diagram()
     fig3.savefig(output_dir / "airflow_scaling_monitoring.png", dpi=300, bbox_inches='tight')
     fig3.savefig(output_dir / "airflow_scaling_monitoring.svg", format='svg', bbox_inches='tight')
     plt.close(fig3)
-    print("✓ Airflow scaling & monitoring diagram saved (PNG + SVG)")
+    print("Airflow scaling & monitoring diagram saved (PNG + SVG)")
     
     print("All Airflow diagrams generated successfully!")
 

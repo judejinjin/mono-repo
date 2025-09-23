@@ -1,5 +1,75 @@
 # GenAI Mono-Repo Development Session Log
 
+## 2025-09-21 Diagram Path Fix & Regeneration Session
+
+### Issue Identified:
+User reported that diagrams were being saved to the wrong location and needed path correction.
+
+### Initial Problem:
+- Diagrams were being output to `devops/docs/architecture` instead of root `docs/architecture`
+- Path resolution issues when running scripts from different directories
+- Unicode encoding errors in Windows terminal with checkmark characters
+
+### Investigation & Solution:
+
+**Path Resolution Fix**:
+1. **Root Cause**: Scripts were using relative paths that resolved based on current working directory
+   - Problem: `"docs" / "architecture"` resolved differently based on execution context
+   - Solution: Changed to absolute paths using `Path(__file__).parent.parent / "docs" / "architecture"`
+
+2. **Scripts Updated** (all 7 diagram generation scripts):
+   - `create_risk_api_diagrams.py` - Fixed output path and added debug logging
+   - `create_dash_diagrams.py` - Applied absolute path pattern
+   - `create_web_apps_diagrams.py` - Fixed Unicode encoding errors in print statements
+   - `create_airflow_diagrams.py` - Applied path corrections
+   - `create_architecture_diagrams.py` - Ensured consistent path resolution
+   - `create_cicd_flow_diagram.py` - Applied path fixes
+   - `generate_all_diagrams.py` - Master script with corrected paths
+
+3. **Unicode Encoding Fix**:
+   - **Problem**: Checkmark characters (✓) causing `UnicodeEncodeError` in Windows cmd.exe
+   - **Solution**: Replaced Unicode characters with plain text in print statements
+   - **Affected Files**: Multiple diagram scripts with status messages
+
+### Verification Process:
+1. **Path Verification**: Added debug output to show exact resolved paths
+   - Confirmed: `c:\GenAI\mono-repo\docs\architecture` (correct location)
+2. **File Generation Test**: Ran individual scripts to verify output location
+3. **Master Script Test**: Executed `generate_all_diagrams.py` to ensure all paths work
+4. **Directory Cleanup**: Verified no files remained in incorrect `devops/docs/architecture`
+
+### Final Results:
+✅ **All 30 diagram files** correctly generated in `docs/architecture`:
+- Risk API diagrams (2 files) - PNG + SVG
+- Dash Analytics diagrams (3 files) - PNG + SVG  
+- Web Apps diagrams (3 files) - PNG + SVG
+- Airflow diagrams (3 files) - PNG + SVG
+- Architecture diagrams (3 environments) - PNG + SVG
+- CI/CD flow diagram (1 file) - PNG + SVG
+
+✅ **Path Resolution**: All scripts now use absolute paths for consistent output location
+✅ **Unicode Issues**: Removed problematic characters, scripts run cleanly on Windows
+✅ **Verification**: File timestamps confirm all diagrams generated at correct location (08:28-08:54 PM)
+
+### Technical Implementation:
+```python
+# Before (problematic relative path)
+output_dir = Path("docs") / "architecture"
+
+# After (absolute path resolution)
+output_dir = Path(__file__).parent.parent / "docs" / "architecture"
+```
+
+### Session Commands:
+- Diagram regeneration: `python devops\create_*_diagrams.py`
+- Path verification: Added debug logging to show resolved paths
+- Directory checks: Verified correct output location and cleaned up incorrect locations
+
+**Files Updated**: 7 diagram generation scripts with absolute path resolution
+**Status**: ✅ COMPLETE - All diagrams generating correctly in `docs/architecture`
+
+---
+
 ## 2025-09-21 Final Diagram Restoration (User Request: Fix Incomplete Rollback)
 
 ### Issue Identified:

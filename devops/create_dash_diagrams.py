@@ -414,8 +414,8 @@ def main():
     """Generate all Dash Analytics diagrams."""
     
     # Create output directory
-    output_dir = Path("../docs/architecture")
-    output_dir.mkdir(exist_ok=True)
+    output_dir = Path(__file__).parent.parent / "docs" / "architecture"
+    output_dir.mkdir(parents=True, exist_ok=True)
     
     print("Generating Dash Analytics Application diagrams...")
     
@@ -424,21 +424,21 @@ def main():
     fig1.savefig(output_dir / "dash_analytics_architecture.png", dpi=300, bbox_inches='tight')
     fig1.savefig(output_dir / "dash_analytics_architecture.svg", format='svg', bbox_inches='tight')
     plt.close(fig1)
-    print("✓ Dash analytics architecture diagram saved (PNG + SVG)")
+    print("Dash analytics architecture diagram saved (PNG + SVG)")
     
     # Generate interactive flow diagram
     fig2 = create_dash_interactive_flow_diagram()
     fig2.savefig(output_dir / "dash_interactive_flow.png", dpi=300, bbox_inches='tight')
     fig2.savefig(output_dir / "dash_interactive_flow.svg", format='svg', bbox_inches='tight')
     plt.close(fig2)
-    print("✓ Dash interactive flow diagram saved (PNG + SVG)")
+    print("Dash interactive flow diagram saved (PNG + SVG)")
     
     # Generate data flow diagram
     fig3 = create_dash_data_flow_diagram()
     fig3.savefig(output_dir / "dash_data_flow.png", dpi=300, bbox_inches='tight')
     fig3.savefig(output_dir / "dash_data_flow.svg", format='svg', bbox_inches='tight')
     plt.close(fig3)
-    print("✓ Dash data flow diagram saved (PNG + SVG)")
+    print("Dash data flow diagram saved (PNG + SVG)")
     
     print("All Dash Analytics diagrams generated successfully!")
 

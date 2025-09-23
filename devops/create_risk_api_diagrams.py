@@ -294,24 +294,25 @@ def main():
     """Generate all Risk API diagrams."""
     
     # Create output directory
-    output_dir = Path("../docs/architecture")
-    output_dir.mkdir(exist_ok=True)
+    output_dir = Path(__file__).parent.parent / "docs" / "architecture"
+    output_dir.mkdir(parents=True, exist_ok=True)
     
     print("Generating Risk API Service diagrams...")
+    print(f"Output directory: {output_dir.absolute()}")
     
     # Generate architecture diagram
     fig1 = create_risk_api_diagram()
     fig1.savefig(output_dir / "risk_api_architecture.png", dpi=300, bbox_inches='tight')
     fig1.savefig(output_dir / "risk_api_architecture.svg", format='svg', bbox_inches='tight')
     plt.close(fig1)
-    print("✓ Risk API architecture diagram saved (PNG + SVG)")
+    print("Risk API architecture diagram saved (PNG + SVG)")
     
     # Generate deployment diagram
     fig2 = create_risk_api_deployment_diagram()
     fig2.savefig(output_dir / "risk_api_deployment.png", dpi=300, bbox_inches='tight')
     fig2.savefig(output_dir / "risk_api_deployment.svg", format='svg', bbox_inches='tight')
     plt.close(fig2)
-    print("✓ Risk API deployment diagram saved (PNG + SVG)")
+    print("Risk API deployment diagram saved (PNG + SVG)")
     
     print("All Risk API diagrams generated successfully!")
 

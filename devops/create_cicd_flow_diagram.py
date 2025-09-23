@@ -188,7 +188,7 @@ def create_cicd_flow_diagram():
     plt.tight_layout()
     
     # Save the diagram
-    output_dir = Path("docs/architecture")
+    output_dir = Path(__file__).parent.parent / "docs" / "architecture"
     output_dir.mkdir(parents=True, exist_ok=True)
     
     # Save as PNG and SVG

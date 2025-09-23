@@ -12,13 +12,13 @@ resource "aws_vpc" "main" {
 }
 
 # Corporate Intranet - No Internet Gateway (comment out for intranet-only)
-resource "aws_internet_gateway" "main" {
-  vpc_id = aws_vpc.main.id
-  
-  tags = {
-    Name = "${var.project_name}-${var.environment}-igw"
-  }
-}
+# resource "aws_internet_gateway" "main" {
+#   vpc_id = aws_vpc.main.id
+#   
+#   tags = {
+#     Name = "${var.project_name}-${var.environment}-igw"
+#   }
+# }
 
 # Management Subnets (formerly public, now for management/bastion access)
 resource "aws_subnet" "management" {

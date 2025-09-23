@@ -7,7 +7,7 @@ setlocal enabledelayedexpansion
 set "SCRIPT_DIR=%~dp0"
 set "PROJECT_ROOT=%SCRIPT_DIR%.."
 set "TERRAFORM_DIR=%PROJECT_ROOT%\infrastructure\terraform"
-set "OUTPUT_DIR=%PROJECT_ROOT%\docs\architecture"
+set "OUTPUT_DIR=%SCRIPT_DIR%docs"
 
 echo.
 echo 🎨 Terraform Infrastructure Visualization Script

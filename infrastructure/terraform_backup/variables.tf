@@ -180,15 +180,3 @@ variable "additional_tags" {
   type        = map(string)
   default     = {}
 }
-
-variable "aws_access_key" {
-  description = "AWS access key for local/demo runs"
-  type        = string
-  default     = "dummy"
-}
-
-variable "aws_secret_key" {
-  description = "AWS secret key for local/demo runs"
-  type        = string
-  default     = "dummy"
-}

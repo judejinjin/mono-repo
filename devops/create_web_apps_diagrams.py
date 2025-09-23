@@ -457,8 +457,8 @@ def main():
     """Generate all Web Applications diagrams."""
     
     # Create output directory
-    output_dir = Path("../docs/architecture")
-    output_dir.mkdir(exist_ok=True)
+    output_dir = Path(__file__).parent.parent / "docs" / "architecture"
+    output_dir.mkdir(parents=True, exist_ok=True)
     
     print("Generating Web Applications diagrams...")
     
@@ -467,21 +467,21 @@ def main():
     fig1.savefig(output_dir / "web_apps_architecture.png", dpi=300, bbox_inches='tight')
     fig1.savefig(output_dir / "web_apps_architecture.svg", format='svg', bbox_inches='tight')
     plt.close(fig1)
-    print("✓ Web apps architecture diagram saved (PNG + SVG)")
+    print("Web apps architecture diagram saved (PNG + SVG)")
     
     # Generate user flow diagram
     fig2 = create_web_apps_user_flow_diagram()
     fig2.savefig(output_dir / "web_apps_user_flow.png", dpi=300, bbox_inches='tight')
     fig2.savefig(output_dir / "web_apps_user_flow.svg", format='svg', bbox_inches='tight')
     plt.close(fig2)
-    print("✓ Web apps user flow diagram saved (PNG + SVG)")
+    print("Web apps user flow diagram saved (PNG + SVG)")
     
     # Generate component architecture diagram
     fig3 = create_web_apps_responsive_design_diagram()
     fig3.savefig(output_dir / "web_apps_component_architecture.png", dpi=300, bbox_inches='tight')
     fig3.savefig(output_dir / "web_apps_component_architecture.svg", format='svg', bbox_inches='tight')
     plt.close(fig3)
-    print("✓ Web apps component architecture diagram saved (PNG + SVG)")
+    print("Web apps component architecture diagram saved (PNG + SVG)")
     
     print("All Web Applications diagrams generated successfully!")
 

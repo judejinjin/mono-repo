@@ -17,26 +17,20 @@ terraform {
     }
   }
   
-  # Using local backend for diagram generation
-  # backend "s3" {
-  #   bucket = "mono-repo-terraform-state"
-  #   key    = "infrastructure/terraform.tfstate"
-  #   region = "us-east-1"
-  #   
-  #   dynamodb_table = "terraform-state-lock"
-  #   encrypt        = true
-  # }
+  backend "s3" {
+    bucket = "mono-repo-terraform-state"
+    key    = "infrastructure/terraform.tfstate"
+    region = "us-east-1"
+    
+    dynamodb_table = "terraform-state-lock"
+    encrypt        = true
+  }
 }
 
 # Configure providers
 provider "aws" {
-  region                      = var.aws_region
-  access_key                  = var.aws_access_key
-  secret_key                  = var.aws_secret_key
-  skip_credentials_validation = true
-  skip_metadata_api_check     = true
-  skip_requesting_account_id  = true
-
+  region = var.aws_region
+  
   default_tags {
     tags = {
       Project     = var.project_name

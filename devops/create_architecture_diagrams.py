@@ -263,8 +263,8 @@ def main():
     print("=" * 50)
     
     # Create output directory
-    output_dir = Path("docs/architecture")
-    output_dir.mkdir(exist_ok=True)
+    output_dir = Path(__file__).parent.parent / "docs" / "architecture"
+    output_dir.mkdir(parents=True, exist_ok=True)
     
     environments = ["dev", "uat", "prod"]
     

@@ -1,37 +1,22 @@
 # Development Server EC2 Instance
 # Only created in development environment
 
-variable "diagram_mode" {
-  description = "Set to 1 for diagram generation, 0 for real deployment"
-  type        = string
-  default     = "0"
-}
-
-variable "static_ami_id" {
-  description = "Static AMI ID for diagram generation"
-  type        = string
-  default     = "ami-12345678"
-}
-
-variable "dev_server_ami_id" {
-  description = "AMI ID for dev server (real deployment)"
-  type        = string
-  default     = ""
-}
-
+# Data source for latest Ubuntu AMI
+## AMI ID is now loaded from environment variable for diagram generation and real deployments
+## If TF_DIAGRAM_MODE=1, use static AMI from env, else use real AMI from env or data source
 locals {
-  # Use static AMI for diagram mode, or env AMI, or data source AMI
-  use_data_source = var.diagram_mode == "0" && length(var.dev_server_ami_id) == 0
-  dev_server_ami = (
-    var.diagram_mode == "1" ? var.static_ami_id : 
-    length(var.dev_server_ami_id) > 0 ? var.dev_server_ami_id : 
-    local.use_data_source ? data.aws_ami.ubuntu[0].id : var.static_ami_id
+  dev_server_ami = ( 
+    (lookup(env, "TF_DIAGRAM_MODE", "0") == "1") 
+      ? lookup(env, "STATIC_AMI_ID", "ami-12345678") 
+      : (length(lookup(env, "DEV_SERVER_AMI_ID", "")) > 0 
+          ? lookup(env, "DEV_SERVER_AMI_ID", "") 
+          : data.aws_ami.ubuntu.id)
   )
 }
 
-## Data source for latest Ubuntu AMI (only used if diagram_mode==0 and no AMI ID set in .env)
+# Data source for latest Ubuntu AMI (used only if not in diagram mode and no env override)
 data "aws_ami" "ubuntu" {
-  count = local.use_data_source ? 1 : 0
+  count = (lookup(env, "TF_DIAGRAM_MODE", "0") == "1" || length(lookup(env, "DEV_SERVER_AMI_ID", "")) > 0) ? 0 : 1
   most_recent = true
   owners      = ["099720109477"] # Canonical
   filter {
@@ -104,28 +89,20 @@ resource "aws_security_group" "dev_server" {
   }
 }
 
-## For diagram generation, comment out AMI data source and use static AMI ID
-# data "aws_ami" "ubuntu" {
-#   most_recent = true
-#   owners      = ["099720109477"]
-#   filter {
-#     name   = "name"
-#     values = ["ubuntu/images/hvm-ssd/ubuntu-focal-20.04-amd64-server-*"]
-#   }
-#   filter {
-#     name   = "virtualization-type"
-#     values = ["hvm"]
-#   }
-# }
-
+# Development Server EC2 Instance
 resource "aws_instance" "dev_server" {
   count = var.create_dev_server ? 1 : 0
+  
   ami                     = local.dev_server_ami
   instance_type           = var.dev_server_instance_type
   key_name                = var.dev_server_key_name
-  subnet_id               = aws_subnet.management[0].id
+  subnet_id               = aws_subnet.public[0].id
   vpc_security_group_ids  = [aws_security_group.dev_server[0].id]
-  monitoring              = var.enable_monitoring
+  
+  # Enhanced monitoring
+  monitoring = var.enable_monitoring
+
+  # Root volume configuration
   root_block_device {
     volume_type           = "gp3"
     volume_size           = 50
