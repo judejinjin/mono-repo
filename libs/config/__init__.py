@@ -15,8 +15,8 @@ logger = logging.getLogger(__name__)
 # Load environment variables from .env file as fallback
 try:
     from dotenv import load_dotenv
-    # Load .env file from config directory
-    CONFIG_PATH = Path(__file__).parent
+    # Load .env file from config directory under project root
+    CONFIG_PATH = Path(__file__).parent.parent.parent / 'config'
     env_path = CONFIG_PATH / '.env'
     if env_path.exists():
         load_dotenv(env_path)
@@ -28,7 +28,7 @@ except ImportError:
 
 # Determine current environment
 ENVIRONMENT = os.getenv('ENVIRONMENT', os.getenv('ENV', 'dev')).lower()
-CONFIG_DIR = Path(__file__).parent
+CONFIG_DIR = Path(__file__).parent.parent.parent / 'config'
 
 # Configuration source priority: Parameter Store > .env > YAML files
 USE_PARAMETER_STORE = os.getenv('USE_PARAMETER_STORE', 'true').lower() == 'true'
