@@ -17,6 +17,12 @@ variable "project_name" {
   default     = "mono-repo"
 }
 
+variable "free_trial" {
+  description = "Enable free trial mode - uses free tier eligible resources"
+  type        = bool
+  default     = false
+}
+
 variable "vpc_cidr" {
   description = "CIDR block for VPC"
   type        = string
@@ -191,4 +197,72 @@ variable "aws_secret_key" {
   description = "AWS secret key for local/demo runs"
   type        = string
   default     = "dummy"
+}
+
+# Parameter Store Variables
+variable "app_name" {
+  description = "Application name for parameter namespacing"
+  type        = string
+  default     = "mono-repo"
+}
+
+variable "regular_parameters" {
+  description = "Map of regular (non-sensitive) parameters to create in Parameter Store"
+  type        = map(string)
+  default     = {}
+}
+
+variable "secure_parameters" {
+  description = "Map of secure (sensitive) parameters to create in Parameter Store"
+  type        = map(string)
+  default     = {}
+  sensitive   = true
+}
+
+variable "parameter_store_create_kms_key" {
+  description = "Whether to create a new KMS key for Parameter Store encryption"
+  type        = bool
+  default     = true
+}
+
+variable "parameter_store_create_access_role" {
+  description = "Whether to create an IAM role for Parameter Store access"
+  type        = bool
+  default     = true
+}
+
+variable "parameter_store_allow_write_access" {
+  description = "Whether to allow write access in the Parameter Store IAM policy"
+  type        = bool
+  default     = false
+}
+
+variable "parameter_store_create_instance_profile" {
+  description = "Whether to create an instance profile for EC2 Parameter Store access"
+  type        = bool
+  default     = false
+}
+
+variable "parameter_store_assume_role_services" {
+  description = "List of AWS services that can assume the Parameter Store access role"
+  type        = list(string)
+  default     = ["ec2.amazonaws.com", "ecs-tasks.amazonaws.com", "lambda.amazonaws.com"]
+}
+
+variable "parameter_store_assume_role_arns" {
+  description = "List of IAM role/user ARNs that can assume the Parameter Store access role"
+  type        = list(string)
+  default     = []
+}
+
+variable "parameter_store_enable_logging" {
+  description = "Whether to enable CloudWatch logging for Parameter Store access"
+  type        = bool
+  default     = false
+}
+
+variable "parameter_store_log_retention_days" {
+  description = "Number of days to retain Parameter Store access logs"
+  type        = number
+  default     = 30
 }

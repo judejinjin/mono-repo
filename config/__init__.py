@@ -1,20 +1,23 @@
 """
 Configuration management module for mono-repo project.
-Handles environment-specific configuration loading with .env support.
+Handles environment-specific configuration loading with AWS Parameter Store and .env fallback support.
 """
 
 import os
 import json
 import yaml
+import logging
 from typing import Dict, Any, Optional
 from pathlib import Path
 
-# Load environment variables from .env file
+logger = logging.getLogger(__name__)
+
+# Load environment variables from .env file as fallback
 try:
     from dotenv import load_dotenv
-    # Load .env file from project root
-    PROJECT_ROOT = Path(__file__).parent.parent
-    env_path = PROJECT_ROOT / '.env'
+    # Load .env file from config directory
+    CONFIG_PATH = Path(__file__).parent
+    env_path = CONFIG_PATH / '.env'
     if env_path.exists():
         load_dotenv(env_path)
         print(f"✅ Loaded environment variables from {env_path}")
@@ -27,12 +30,29 @@ except ImportError:
 ENVIRONMENT = os.getenv('ENVIRONMENT', os.getenv('ENV', 'dev')).lower()
 CONFIG_DIR = Path(__file__).parent
 
+# Configuration source priority: Parameter Store > .env > YAML files
+USE_PARAMETER_STORE = os.getenv('USE_PARAMETER_STORE', 'true').lower() == 'true'
+
 
 class ConfigManager:
-    """Manages configuration loading and caching."""
+    """Manages configuration loading and caching with Parameter Store support."""
     
     def __init__(self):
         self._config_cache = {}
+        self._parameter_store_config = None
+        
+        # Initialize Parameter Store if enabled
+        self._use_parameter_store = USE_PARAMETER_STORE
+        if self._use_parameter_store:
+            try:
+                from libs.cloud.parameter_store import ParameterStoreConfig
+                self._parameter_store_config = ParameterStoreConfig(ENVIRONMENT)
+                logger.info("✅ Parameter Store configuration initialized")
+            except Exception as e:
+                logger.warning(f"⚠️  Parameter Store initialization failed, falling back to YAML: {e}")
+                self._use_parameter_store = False
+        
+        # Load YAML configurations (fallback or primary)
         self._load_base_config()
         self._load_environment_config()
     
@@ -70,8 +90,27 @@ class ConfigManager:
         return result
     
     def get_config(self, key: Optional[str] = None) -> Any:
-        """Get configuration value."""
+        """Get configuration value with Parameter Store priority."""
+        # Start with YAML configuration
         config = self._config_cache.get(ENVIRONMENT, {})
+        
+        # Override with Parameter Store values if available
+        if self._use_parameter_store and self._parameter_store_config:
+            try:
+                # Get all parameter store configurations for common apps
+                apps = ['terraform', 'eks', 'rds', 'fastapi', 'web', 'dash', 'airflow', 'security', 'monitoring', 'ecr', 's3']
+                
+                for app in apps:
+                    app_config = self._parameter_store_config.get_app_config(app)
+                    if app_config:
+                        # Convert parameter store keys to nested structure
+                        if app not in config:
+                            config[app] = {}
+                        config[app].update(app_config)
+                        
+            except Exception as e:
+                logger.warning(f"⚠️  Error loading from Parameter Store, using YAML fallback: {e}")
+        
         if key:
             return config.get(key)
         return config
@@ -108,6 +147,57 @@ class ConfigManager:
 _config_manager = ConfigManager()
 
 # Public API
+def refresh_config_cache():
+    """Refresh configuration cache to reload from Parameter Store."""
+    global _config_manager
+    if _config_manager._use_parameter_store and _config_manager._parameter_store_config:
+        _config_manager._parameter_store_config.refresh_cache()
+    _config_manager._config_cache.clear()
+    _config_manager._load_base_config()
+    _config_manager._load_environment_config()
+    logger.info("Configuration cache refreshed")
+
+def get_parameter_store_value(app_name: str, param_name: str, default: Any = None) -> Any:
+    """
+    Get a value directly from Parameter Store.
+    
+    Args:
+        app_name: Application name
+        param_name: Parameter name
+        default: Default value if not found
+        
+    Returns:
+        Parameter value or default
+    """
+    if _config_manager._use_parameter_store and _config_manager._parameter_store_config:
+        return _config_manager._parameter_store_config.get(app_name, param_name, default)
+    return default
+
+def set_parameter_store_value(
+    app_name: str, 
+    param_name: str, 
+    value: Any,
+    secure: bool = False
+) -> bool:
+    """
+    Set a value in Parameter Store.
+    
+    Args:
+        app_name: Application name
+        param_name: Parameter name
+        value: Parameter value
+        secure: Whether to store as SecureString
+        
+    Returns:
+        True if successful, False otherwise
+    """
+    if _config_manager._use_parameter_store and _config_manager._parameter_store_config:
+        full_name = f"/{ENVIRONMENT}/{app_name}/{param_name}"
+        param_type = 'SecureString' if secure else 'String'
+        return _config_manager._parameter_store_config.parameter_manager.put_parameter(
+            full_name, str(value), param_type
+        )
+    return False
 def get_config(key: Optional[str] = None) -> Any:
     """Get configuration value."""
     return _config_manager.get_config(key)
@@ -126,10 +216,29 @@ def get_environment() -> str:
 
 
 def get_aws_credentials() -> Dict[str, str]:
-    """Get AWS credentials from environment variables."""
+    """Get AWS credentials from Parameter Store or environment variables."""
     credentials = {}
     
-    # Primary AWS credentials
+    # Try Parameter Store first if enabled
+    if _config_manager._use_parameter_store and _config_manager._parameter_store_config:
+        try:
+            param_config = _config_manager._parameter_store_config
+            credentials['aws_access_key_id'] = param_config.get('aws', 'access_key_id')
+            credentials['aws_secret_access_key'] = param_config.get('aws', 'secret_access_key')
+            credentials['aws_session_token'] = param_config.get('aws', 'session_token')
+            credentials['region_name'] = param_config.get('aws', 'region', 'us-east-1')
+            credentials['profile_name'] = param_config.get('aws', 'profile')
+            
+            # Filter out None values
+            credentials = {k: v for k, v in credentials.items() if v is not None}
+            
+            if credentials:
+                logger.info("✅ AWS credentials loaded from Parameter Store")
+                return credentials
+        except Exception as e:
+            logger.warning(f"⚠️  Failed to load AWS credentials from Parameter Store: {e}")
+    
+    # Fallback to environment variables
     if os.getenv('AWS_ACCESS_KEY_ID'):
         credentials['aws_access_key_id'] = os.getenv('AWS_ACCESS_KEY_ID')
     if os.getenv('AWS_SECRET_ACCESS_KEY'):
@@ -166,7 +275,7 @@ def setup_aws_environment():
 
 
 def get_boto3_session():
-    """Get a boto3 session with credentials from .env file."""
+    """Get a boto3 session with credentials from config/.env file."""
     try:
         import boto3
         credentials = get_aws_credentials()

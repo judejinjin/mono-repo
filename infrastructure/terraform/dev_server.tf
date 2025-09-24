@@ -121,14 +121,14 @@ resource "aws_security_group" "dev_server" {
 resource "aws_instance" "dev_server" {
   count = var.create_dev_server ? 1 : 0
   ami                     = local.dev_server_ami
-  instance_type           = var.dev_server_instance_type
+  instance_type           = local.dev_server_instance_type
   key_name                = var.dev_server_key_name
   subnet_id               = aws_subnet.management[0].id
   vpc_security_group_ids  = [aws_security_group.dev_server[0].id]
-  monitoring              = var.enable_monitoring
+  monitoring              = local.enable_detailed_monitoring
   root_block_device {
     volume_type           = "gp3"
-    volume_size           = 50
+    volume_size           = local.dev_server_volume_size
     delete_on_termination = true
     encrypted             = true
   }

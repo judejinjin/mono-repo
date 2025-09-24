@@ -1,0 +1,104 @@
+# Free Trial environment variables
+# Example configuration for AWS Free Tier deployments
+# Copy this file to dev.tfvars or create a new environment
+
+environment = "free-trial"
+aws_region  = "us-east-1"
+
+# Free Trial Configuration
+# MUST be set to true for AWS Free Tier compliance
+free_trial = true
+
+# VPC Configuration (minimal for free tier)
+vpc_cidr           = "10.0.0.0/16"
+availability_zones = ["us-east-1a", "us-east-1b"]
+
+# EKS Configuration (free tier optimized)
+eks_cluster_version       = "1.28"
+eks_node_instance_types   = ["t3.micro"]  # Free tier eligible
+eks_node_desired_capacity = 1             # Minimal nodes
+eks_node_max_capacity     = 2             # Limited scaling
+eks_node_min_capacity     = 1
+
+# Dev Server Configuration (free tier)
+create_dev_server        = true
+dev_server_instance_type = "t3.micro"     # Free tier eligible
+dev_server_key_name      = "mono-repo-free-trial-key"
+
+# Database Configuration (free tier)
+rds_instance_class        = "db.t3.micro" # Free tier eligible
+rds_allocated_storage     = 20            # Free tier limit
+rds_max_allocated_storage = 20            # No auto-scaling to avoid costs
+
+# Storage Configuration
+s3_bucket_prefix = "mono-repo-free-trial"
+
+# Monitoring Configuration (cost optimized)
+enable_monitoring     = false             # Disable to reduce CloudWatch costs
+enable_logging        = false             # Disable detailed logging
+enable_vpc_flow_logs  = false             # Disabled for cost savings
+
+# Security Configuration
+allowed_cidr_blocks = ["0.0.0.0/0"]       # Should be restricted for production
+
+# Additional Tags
+additional_tags = {
+  Owner       = "FreeTrial"
+  CostCenter  = "Personal"
+  Project     = "MonoRepo"
+  FreeTier    = "true"
+}
+
+# Parameter Store Configuration
+app_name = "mono-repo"
+
+regular_parameters = {
+  "database/host"           = "mono-repo-free-trial-db.cluster-xyz.us-east-1.rds.amazonaws.com"
+  "database/port"           = "5432"
+  "database/name"           = "mono_repo_free_trial"
+  "api/base_url"            = "https://api.free-trial.mono-repo.com"
+  "api/version"             = "v1"
+  "app/environment"         = "free-trial"
+  "app/debug"               = "true"
+  "app/log_level"           = "INFO"
+  "redis/host"              = "mono-repo-free-trial-redis.cache.amazonaws.com"
+  "redis/port"              = "6379"
+  "s3/bucket_name"          = "mono-repo-free-trial-assets"
+  "s3/region"               = "us-east-1"
+  "airflow/webserver_url"   = "https://airflow.free-trial.mono-repo.com"
+  "dash/app_url"            = "https://dash.free-trial.mono-repo.com"
+  "monitoring/enabled"      = "false"
+  "cors/allowed_origins"    = "https://free-trial.mono-repo.com,http://localhost:3000"
+}
+
+secure_parameters = {
+  "database/username"       = "mono_repo_admin"
+  "database/password"       = "free-trial-db-password-12345"
+  "api/secret_key"          = "free-trial-api-secret-key-abcdef123456"
+  "jwt/secret"              = "free-trial-jwt-secret-789xyz"
+  "redis/password"          = "free-trial-redis-password-987654"
+  "airflow/fernet_key"      = "free-trial-airflow-fernet-key-encrypted"
+  "airflow/secret_key"      = "free-trial-airflow-secret-key"
+  "dash/secret_key"         = "free-trial-dash-secret-key-123"
+  "encryption/key"          = "free-trial-encryption-master-key"
+  "oauth/client_secret"     = "free-trial-oauth-client-secret"
+  "webhook/signing_secret"  = "free-trial-webhook-signing-secret"
+}
+
+# Parameter Store Settings (cost optimized)
+parameter_store_create_kms_key         = false  # Use default AWS managed key to reduce costs
+parameter_store_create_access_role     = true
+parameter_store_allow_write_access     = true
+parameter_store_create_instance_profile = true
+parameter_store_enable_logging         = false  # Disable logging to reduce CloudWatch costs
+parameter_store_log_retention_days     = 1     # Minimal retention
+
+parameter_store_assume_role_arns = [
+  # Add specific ARNs for free trial environment access
+]
+
+# Corporate Network Configuration (if applicable)
+corporate_network_cidrs = ["10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16"]
+
+# Cost Alert Configuration
+cost_alert_threshold = 50  # Alert if monthly costs exceed $50

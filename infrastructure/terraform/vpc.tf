@@ -135,9 +135,9 @@ resource "aws_vpc_endpoint" "s3" {
   }
 }
 
-# VPC Flow Logs (optional)
+# VPC Flow Logs (optional, disabled in free trial to reduce costs)
 resource "aws_flow_log" "vpc" {
-  count = var.enable_vpc_flow_logs ? 1 : 0
+  count = local.enable_vpc_flow_logs ? 1 : 0
   
   iam_role_arn    = aws_iam_role.flow_log[0].arn
   log_destination = aws_cloudwatch_log_group.vpc_flow_log[0].arn
@@ -146,14 +146,14 @@ resource "aws_flow_log" "vpc" {
 }
 
 resource "aws_cloudwatch_log_group" "vpc_flow_log" {
-  count = var.enable_vpc_flow_logs ? 1 : 0
+  count = local.enable_vpc_flow_logs ? 1 : 0
   
   name              = "/aws/vpc/flow-logs/${var.project_name}-${var.environment}"
   retention_in_days = 14
 }
 
 resource "aws_iam_role" "flow_log" {
-  count = var.enable_vpc_flow_logs ? 1 : 0
+  count = local.enable_vpc_flow_logs ? 1 : 0
   
   name = "${var.project_name}-${var.environment}-flow-log-role"
   
@@ -172,7 +172,7 @@ resource "aws_iam_role" "flow_log" {
 }
 
 resource "aws_iam_role_policy" "flow_log" {
-  count = var.enable_vpc_flow_logs ? 1 : 0
+  count = local.enable_vpc_flow_logs ? 1 : 0
   
   name = "${var.project_name}-${var.environment}-flow-log-policy"
   role = aws_iam_role.flow_log[0].id

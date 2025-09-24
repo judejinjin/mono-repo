@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 AWS Credentials Setup Helper
-This script helps you configure AWS credentials in the .env file for testing.
+This script helps you configure AWS credentials in the config/.env file for testing.
 """
 
 import os
@@ -9,16 +9,16 @@ import getpass
 from pathlib import Path
 
 def setup_aws_credentials():
-    """Interactive setup for AWS credentials in .env file."""
+    """Interactive setup for AWS credentials in config/.env file."""
     print("🔧 AWS Credentials Setup for Personal Account Testing")
     print("=" * 55)
     
-    # Get project root and .env path
+    # Get project root and config/.env path
     project_root = Path(__file__).parent
-    env_file = project_root / '.env'
+    env_file = project_root / 'config' / '.env'
     
     if not env_file.exists():
-        print("❌ .env file not found! Please make sure the .env file exists.")
+        print("❌ config/.env file not found! Please make sure the config/.env file exists.")
         return False
     
     print(f"📁 Found .env file at: {env_file}")
@@ -26,7 +26,7 @@ def setup_aws_credentials():
     
     # Get AWS credentials from user
     print("Please enter your AWS credentials for personal account testing:")
-    print("(These will be stored in the .env file)")
+    print("(These will be stored in the config/.env file)")
     print()
     
     aws_access_key = input("AWS Access Key ID: ").strip()
@@ -43,11 +43,11 @@ def setup_aws_credentials():
     
     aws_session_token = input("AWS Session Token (optional, press Enter to skip): ").strip()
     
-    # Read current .env file
+    # Read current config/.env file
     with open(env_file, 'r') as f:
         lines = f.readlines()
     
-    # Update AWS credentials in .env file
+    # Update AWS credentials in config/.env file
     updated_lines = []
     credentials_updated = {
         'AWS_ACCESS_KEY_ID': False,
@@ -89,12 +89,12 @@ def setup_aws_credentials():
     if not credentials_updated['AWS_DEFAULT_REGION']:
         updated_lines.append(f'AWS_DEFAULT_REGION={aws_region}\n')
     
-    # Write updated .env file
+    # Write updated config/.env file
     with open(env_file, 'w') as f:
         f.writelines(updated_lines)
     
     print()
-    print("✅ AWS credentials successfully configured in .env file!")
+    print("✅ AWS credentials successfully configured in config/.env file!")
     print()
     
     # Test the configuration
@@ -113,7 +113,7 @@ def setup_aws_credentials():
             print(f"   Access Key: {creds.get('aws_access_key_id')[:8]}...")
             return True
         else:
-            print("❌ Failed to load credentials from .env file")
+            print("❌ Failed to load credentials from config/.env file")
             return False
     
     except Exception as e:
@@ -167,6 +167,6 @@ if __name__ == "__main__":
         print("\n🎉 Setup complete! You can now run:")
         print("   python build/build.py")
         print("   python deploy/deploy.py")
-        print("\nYour AWS credentials will be automatically loaded from the .env file.")
+        print("\nYour AWS credentials will be automatically loaded from the config/.env file.")
     else:
         print("\n❌ Setup failed. Please try again.")

@@ -27,7 +27,7 @@ class DeploymentManager:
     """Manages deployment processes for different targets and environments."""
     
     def __init__(self, environment: str = None):
-        # Set up AWS environment from .env file
+        # Set up AWS environment from config/.env file
         setup_aws_environment()
         
         self.environment = environment or get_environment()
@@ -47,6 +47,10 @@ class DeploymentManager:
     def deploy_infrastructure(self) -> bool:
         """Deploy infrastructure using Terraform."""
         logger.info(f"Deploying infrastructure for environment: {self.environment}")
+        
+        # First, setup environment configuration in Parameter Store
+        if not self._setup_environment_config():
+            logger.warning("Parameter Store setup failed, continuing with deployment")
         
         terraform_dir = self.project_root / 'infrastructure' / 'terraform'
         if not terraform_dir.exists():
@@ -85,6 +89,31 @@ class DeploymentManager:
                 logger.error(f"Failed to deploy application: {app}")
         
         return success
+    
+    def _setup_environment_config(self) -> bool:
+        """Setup environment configuration in Parameter Store."""
+        try:
+            import subprocess
+            setup_script = self.project_root / 'scripts' / 'setup_environment_config.py'
+            
+            cmd = [
+                'python', str(setup_script),
+                '--environment', self.environment,
+                '--region', os.getenv('AWS_DEFAULT_REGION', 'us-east-1')
+            ]
+            
+            result = subprocess.run(cmd, capture_output=True, text=True)
+            
+            if result.returncode == 0:
+                logger.info("✅ Environment configuration setup completed")
+                return True
+            else:
+                logger.error(f"Environment configuration setup failed: {result.stderr}")
+                return False
+                
+        except Exception as e:
+            logger.error(f"Failed to setup environment configuration: {e}")
+            return False
     
     def deploy_component(self, component: str) -> bool:
         """Deploy specific component."""
