@@ -21,7 +21,7 @@ def create_web_apps_architecture_diagram():
     # Main architecture diagram
     ax1 = plt.subplot2grid((3, 2), (0, 0), colspan=2, rowspan=2)
     ax1.set_xlim(0, 20)
-    ax1.set_ylim(0, 16)
+    ax1.set_ylim(0, 16)  # Standard limit for corporate intranet architecture
     ax1.set_aspect('equal')
     ax1.axis('off')
     
@@ -54,8 +54,8 @@ def create_web_apps_architecture_diagram():
     }
     
     # Main Architecture Diagram
-    ax1.text(10, 15.5, 'React Web Applications Architecture', 
-             fontsize=20, fontweight='bold', ha='center')
+    ax1.text(10, 15.5, 'React Web Applications Architecture (Corporate Intranet)', 
+             fontsize=18, fontweight='bold', ha='center')
     
     # Corporate Network boundary
     corp_rect = patches.Rectangle((0.5, 0.5), 19, 14.5, linewidth=3, 
@@ -75,11 +75,18 @@ def create_web_apps_architecture_diagram():
     ax1.add_patch(vpc_rect)
     ax1.text(2.5, 12.5, 'VPC (10.0.0.0/16)', fontsize=11, fontweight='bold', color='green')
     
+    # US-East-1 Region box for AWS services and external services
+    us_east_1_rect = patches.Rectangle((3, 0.5), 14, 1.8, linewidth=2, 
+                                       edgecolor='orange', facecolor='#FFF8DC', alpha=0.4)
+    ax1.add_patch(us_east_1_rect)
+    ax1.text(10, 1.9, 'US-East-1 Region (AWS Services & External)', 
+             fontsize=11, fontweight='bold', color='orange', ha='center')
+    
     # Load Balancer (ALB)
     alb_rect = FancyBboxPatch((3, 11), 3, 1.5, boxstyle="round,pad=0.1",
                               facecolor=colors['loadbalancer'], edgecolor='black', linewidth=2)
     ax1.add_patch(alb_rect)
-    ax1.text(4.5, 11.75, 'Internal ALB\n/* → Web Apps', 
+    ax1.text(4.5, 11.75, 'Internal ALB\n(Corporate Only)\n/* → Web Apps', 
              fontsize=10, fontweight='bold', ha='center', va='center')
     
     # EKS Cluster
@@ -88,45 +95,63 @@ def create_web_apps_architecture_diagram():
     ax1.add_patch(eks_rect)
     ax1.text(3.5, 10, 'EKS Cluster', fontsize=12, fontweight='bold', color='darkblue')
     
-    # Web Application Pods
+    # Nginx/Static Assets (positioned in front of React apps)
+    nginx_positions = [
+        ('dev', 4, 9.5),
+        ('uat', 7, 9.5), 
+        ('prod', 10, 9.5)
+    ]
+    
+    for env, x_pos, y_pos in nginx_positions:
+        nginx_rect = FancyBboxPatch((x_pos, y_pos), 2.5, 0.8, boxstyle="round,pad=0.1",
+                                    facecolor=colors['nginx'], edgecolor='black', linewidth=2)
+        ax1.add_patch(nginx_rect)
+        ax1.text(x_pos + 1.25, y_pos + 0.4, f'Nginx\n{env.upper()}\nPort: 80/443', 
+                 fontsize=8, fontweight='bold', ha='center', va='center', color='white')
+    
+    # Web Application Pods (behind Nginx)
     web_apps = [
-        ('Dashboard', 'dev', 4, 8.5),
-        ('Dashboard', 'uat', 7, 8.5), 
-        ('Dashboard', 'prod', 10, 8.5),
-        ('Admin', 'dev', 4, 7),
-        ('Admin', 'uat', 7, 7),
-        ('Admin', 'prod', 10, 7)
+        ('Dashboard', 'dev', 4, 8),
+        ('Dashboard', 'uat', 7, 8), 
+        ('Dashboard', 'prod', 10, 8),
+        ('Admin', 'dev', 4, 6.8),
+        ('Admin', 'uat', 7, 6.8),
+        ('Admin', 'prod', 10, 6.8)
     ]
     
     for app_name, env, x_pos, y_pos in web_apps:
         color = colors['react'] if app_name == 'Dashboard' else '#FF6B6B'
-        pod_rect = FancyBboxPatch((x_pos, y_pos), 2.5, 1, boxstyle="round,pad=0.1",
+        pod_rect = FancyBboxPatch((x_pos, y_pos), 2.5, 0.8, boxstyle="round,pad=0.1",
                                   facecolor=color, edgecolor='black', linewidth=1)
         ax1.add_patch(pod_rect)
-        ax1.text(x_pos + 1.25, y_pos + 0.5, f'{app_name}\n{env.upper()}\nPort: 3000', 
-                 fontsize=8, fontweight='bold', ha='center', va='center')
+        ax1.text(x_pos + 1.25, y_pos + 0.4, f'{app_name}\n{env.upper()}\nPort: 3000', 
+                 fontsize=7, fontweight='bold', ha='center', va='center')
     
-    # Nginx/Static Assets
-    for i, env in enumerate(['dev', 'uat', 'prod']):
-        x_pos = 13 + i * 1.5
-        nginx_rect = FancyBboxPatch((x_pos, 8), 1.2, 1.5, boxstyle="round,pad=0.1",
-                                    facecolor=colors['nginx'], edgecolor='black', linewidth=1)
-        ax1.add_patch(nginx_rect)
-        ax1.text(x_pos + 0.6, 8.75, f'Nginx\n{env.upper()}', 
-                 fontsize=8, fontweight='bold', ha='center', va='center', color='white')
+    # Build Tools & Registry - Remove Vite (build-time tool) and CloudFront (move to global position)
+    # Note: Vite is used during build time, not at runtime, so removed from architecture diagram
     
-    # Build Tools & Registry
-    build_tools = [
-        (7, 11, 'ECR Repository\nweb-app images', colors['ecr']),
-        (11, 11, 'Vite Build\nSystem', colors['vite']),
-        (15, 11, 'CDN/CloudFront\n(Future)', colors['cdn'])
-    ]
+    # AWS Services and External Services in US-East-1 Region
+    # ECR Repository  
+    ecr_rect = FancyBboxPatch((7.5, 0.7), 3, 0.8, boxstyle="round,pad=0.1",
+                              facecolor=colors['ecr'], edgecolor='black', linewidth=2)
+    ax1.add_patch(ecr_rect)
+    ax1.text(9, 1.1, 'ECR Repository\nweb-app images', 
+             fontsize=9, fontweight='bold', ha='center', va='center')
     
-    for x, y, label, color in build_tools:
-        rect = FancyBboxPatch((x-1, y-0.75), 2, 1.5, boxstyle="round,pad=0.1",
-                              facecolor=color, edgecolor='black', linewidth=2)
-        ax1.add_patch(rect)
-        ax1.text(x, y, label, fontsize=9, fontweight='bold', ha='center', va='center')
+    # Snowflake (for consistency with other diagrams)
+    snowflake_rect = FancyBboxPatch((11, 0.7), 3, 0.8, boxstyle="round,pad=0.1",
+                                    facecolor='#29B5E8', edgecolor='black', linewidth=2)
+    ax1.add_patch(snowflake_rect)
+    ax1.text(12.5, 1.1, 'Snowflake\nData Warehouse', 
+             fontsize=9, fontweight='bold', ha='center', va='center', color='white')
+    
+    # VPC Endpoint for ECR connectivity
+    vpc_endpoint_ecr = patches.Rectangle((8, 2.8), 2, 0.4, linewidth=1,
+                                         facecolor='lightyellow', edgecolor='orange')
+    ax1.add_patch(vpc_endpoint_ecr)
+    ax1.text(9, 3, 'VPC Endpoint\n(ECR)', fontsize=8, ha='center', va='center')
+    
+    # CloudFront removed - Web app serves corporate intranet only, no need for global CDN
     
     # External API Integration
     api_rect = FancyBboxPatch((3, 4.5), 6, 1.5, boxstyle="round,pad=0.1",
@@ -136,13 +161,31 @@ def create_web_apps_architecture_diagram():
              fontsize=10, fontweight='bold', ha='center', va='center', color='white')
     
     # Add arrows showing traffic flow
-    # ALB to Web Apps
-    ax1.annotate('', xy=(5.5, 8.5), xytext=(4.5, 11),
-                arrowprops=dict(arrowstyle='->', lw=2, color='red'))
+    # Corporate Users accessing Internal ALB (no external internet access)
+    ax1.annotate('', xy=(4.5, 11.8), xytext=(2, 14),
+                arrowprops=dict(arrowstyle='->', lw=3, color='purple'))
+    ax1.text(1.5, 12.8, 'Corporate\nUsers Only', fontsize=10, color='purple', fontweight='bold')
     
-    # Web Apps to API Layer
-    ax1.annotate('', xy=(6, 6), xytext=(6, 7),
-                arrowprops=dict(arrowstyle='->', lw=1.5, color='blue'))  
+    # Internal ALB to Nginx (internal traffic)
+    ax1.annotate('', xy=(5.25, 9.5), xytext=(4.5, 11),
+                arrowprops=dict(arrowstyle='->', lw=2, color='red'))
+    ax1.text(3.5, 10.3, 'Internal\nHTTP/HTTPS', fontsize=8, color='red', rotation=45)
+    
+    # Nginx to React Apps (static files + API proxy)
+    for x_pos in [5.25, 8.25, 11.25]:
+        ax1.annotate('', xy=(x_pos, 8.8), xytext=(x_pos, 9.3),
+                    arrowprops=dict(arrowstyle='->', lw=1.5, color='green'))
+    ax1.text(13, 9, 'Static Files\n& API Proxy', fontsize=8, color='green')
+    
+    # React Apps to API Layer (for dynamic data)
+    ax1.annotate('', xy=(6, 6), xytext=(6, 6.8),
+                arrowprops=dict(arrowstyle='->', lw=1.5, color='blue'))
+    ax1.text(6.5, 6.4, 'API Calls', fontsize=8, color='blue')
+    
+    # ECR deployment flow (from VPC endpoint to ECR)
+    ax1.annotate('', xy=(9, 2.8), xytext=(9, 1.5),
+                arrowprops=dict(arrowstyle='->', lw=2, color='orange', linestyle='dashed'))
+    ax1.text(9.5, 2.2, 'Deploy', fontsize=8, color='orange', fontweight='bold')  
     
     # Application Components (ax2)
     ax2.text(5, 5.5, 'Web Application Components', fontsize=14, fontweight='bold', ha='center')

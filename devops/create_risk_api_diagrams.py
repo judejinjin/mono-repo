@@ -108,32 +108,45 @@ def create_risk_api_diagram():
         ax1.text(x_pos + 1.5, db_y + 0.6, f'PostgreSQL\nRDS {env.upper()}', 
                  fontsize=9, fontweight='bold', ha='center', va='center')
     
-    # Snowflake (External)
-    snowflake_rect = FancyBboxPatch((14, 3.5), 3, 1, boxstyle="round,pad=0.1",
-                                    facecolor='lightblue', edgecolor='black', linewidth=1)
+    # US-East-1 Region box (AWS Services & External) 
+    us_east_1_rect = patches.Rectangle((3, 0.5), 14, 1.8, linewidth=2, 
+                                      edgecolor='purple', facecolor='#F5F0FF', alpha=0.3)
+    ax1.add_patch(us_east_1_rect)
+    ax1.text(10, 1.9, 'US-East-1 Region (AWS Services & External)', ha='center', va='center', 
+           fontsize=10, fontweight='bold', color='purple')
+    
+    # Snowflake (External) - positioned beside ECR in region box
+    snowflake_rect = FancyBboxPatch((11, 0.7), 3, 0.8, boxstyle="round,pad=0.1",
+                                    facecolor='lightblue', edgecolor='black', linewidth=2)
     ax1.add_patch(snowflake_rect)
-    ax1.text(15.5, 4, 'Snowflake\nAnalytics DB', 
+    ax1.text(12.5, 1.1, 'Snowflake\nAnalytics DB', 
              fontsize=9, fontweight='bold', ha='center', va='center')
     
-    # ECR Repository
-    ecr_rect = FancyBboxPatch((7, 11), 3, 1.5, boxstyle="round,pad=0.1",
+    # ECR Repository - moved to US-East-1 region beside Snowflake
+    ecr_rect = FancyBboxPatch((7.5, 0.7), 3, 0.8, boxstyle="round,pad=0.1",
                               facecolor=colors['ecr'], edgecolor='black', linewidth=2)
     ax1.add_patch(ecr_rect)
-    ax1.text(8.5, 11.75, 'ECR Repository\nrisk-api images', 
-             fontsize=10, fontweight='bold', ha='center', va='center')
+    ax1.text(9, 1.1, 'ECR Repository\nrisk-api images', 
+             fontsize=9, fontweight='bold', ha='center', va='center')
     
-    # Secrets Manager
-    secrets_rect = FancyBboxPatch((11, 11), 3, 1.5, boxstyle="round,pad=0.1",
+    # VPC Endpoints for AWS service connectivity
+    vpc_endpoint_ecr = patches.Rectangle((8, 2.8), 2, 0.4, linewidth=1, 
+                                        edgecolor='gray', facecolor='lightgray', alpha=0.6)
+    ax1.add_patch(vpc_endpoint_ecr)
+    ax1.text(9, 3, 'ECR VPC Endpoint', ha='center', va='center', fontsize=8)
+    
+    # Secrets Manager - moved to fill ECR's former space
+    secrets_rect = FancyBboxPatch((7, 11), 3, 1.5, boxstyle="round,pad=0.1",
                                   facecolor=colors['secrets'], edgecolor='black', linewidth=2)
     ax1.add_patch(secrets_rect)
-    ax1.text(12.5, 11.75, 'Secrets Manager\nDB Credentials', 
+    ax1.text(8.5, 11.75, 'Secrets Manager\nDB Credentials', 
              fontsize=10, fontweight='bold', ha='center', va='center')
     
-    # IAM Role
-    iam_rect = FancyBboxPatch((15, 11), 2.5, 1.5, boxstyle="round,pad=0.1",
+    # IAM Role - repositioned
+    iam_rect = FancyBboxPatch((11, 11), 3, 1.5, boxstyle="round,pad=0.1",
                               facecolor=colors['iam'], edgecolor='black', linewidth=2)
     ax1.add_patch(iam_rect)
-    ax1.text(16.25, 11.75, 'IAM Role\nrisk-api-role', 
+    ax1.text(12.5, 11.75, 'IAM Role\nrisk-api-role', 
              fontsize=10, fontweight='bold', ha='center', va='center')
     
     # Add arrows showing data flow
@@ -146,6 +159,20 @@ def create_risk_api_diagram():
         x_pos = 5.5 + i * 4
         ax1.annotate('', xy=(x_pos, 6.2), xytext=(x_pos, 8),
                     arrowprops=dict(arrowstyle='->', lw=1.5, color='blue'))
+    
+    # ECR to VPC endpoint connection (container image deployment)
+    ax1.annotate('', xy=(9, 2.8), xytext=(9, 1.5),
+                arrowprops=dict(arrowstyle='->', lw=1.5, color='orange', linestyle='dashed'))
+    
+    # VPC endpoint to FastAPI Apps (image pull)
+    ax1.annotate('', xy=(6, 8), xytext=(9, 3.2),
+                arrowprops=dict(arrowstyle='->', lw=1.5, color='orange', linestyle='dashed'))
+    ax1.text(7, 5.5, 'Image\nPull', fontsize=7, color='orange')
+    
+    # Snowflake analytics connection
+    ax1.annotate('', xy=(10, 8), xytext=(12.5, 1.5),
+                arrowprops=dict(arrowstyle='<->', lw=1.5, color='purple'))
+    ax1.text(11.5, 4.5, 'Analytics\nData', fontsize=7, color='purple', rotation=60)
     
     # Service Flow Diagram (ax2)
     ax2.text(5, 5.5, 'API Request Flow', fontsize=14, fontweight='bold', ha='center')

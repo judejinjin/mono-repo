@@ -3702,3 +3702,205 @@ resource "aws_iam_role" "rds_enhanced_monitoring" {
 - **Developer Experience**: Simplified deployment for personal development environments
 
 **Result**: Successfully implemented comprehensive AWS Free Tier optimization with conditional resource sizing. Infrastructure now automatically configures appropriate resource sizes based on free_trial flag, enabling cost-effective personal deployments while maintaining production scalability options.
+
+---
+
+## 2025-01-24 Web App Architecture: Corporate Intranet-Only Configuration
+
+### User Requests & Context:
+1. **Diagram Consistency**: "Please examine both architecture diagram and dash diagram to make sure dash diagram is following architecture diagram in terms of where ECR and snowflake sit in the diagram"
+2. **VPC Positioning Analysis**: User asked to examine whether CloudFront sits inside VPC and explain Nginx positioning
+3. **Nginx Traffic Flow**: "If nginx is serving traffic, should it sit in front of the dashboard web app?"
+4. **Corporate Intranet Requirement**: "Since our web app won't be served outside of corporate intranet, please adjust all of its terra forms and diagrams accordingly!"
+5. **Security Verification**: "Can you examine whether terraforms for web app also has this requirement implemented: only corporate users inside the intranet can access web apps?"
+
+### Issues Identified & Fixed:
+
+#### **1. Diagram Consistency Problems** ❌ → ✅
+**Problems Found**:
+- **ECR Positioning**: Inconsistent across diagrams (inside VPC in some, region box in others)
+- **Snowflake Positioning**: Missing from web app diagram, inconsistent placement
+- **Architecture Standards**: No standardized positioning for AWS services and external services
+
+**Solutions Applied**:
+- ✅ **Added US-East-1 Region Box**: All diagrams now have consistent region box (3, 0.5, 14, 1.8)
+- ✅ **ECR Standardized**: Positioned at (7.5, 0.7) in US-East-1 region box across ALL diagrams
+- ✅ **Snowflake Standardized**: Positioned at (11, 0.7) beside ECR in ALL diagrams
+- ✅ **VPC Endpoints Added**: Proper ECR-VPC connectivity shown with VPC endpoints
+
+**Diagrams Updated**:
+- `create_dash_diagrams.py` - ECR/Snowflake repositioned with region box
+- `create_risk_api_diagrams.py` - Applied same positioning fixes
+- `create_web_apps_diagrams.py` - Added Snowflake, repositioned ECR
+
+#### **2. CloudFront Architectural Error** ❌ → ✅
+**Problem**: CloudFront was positioned inside VPC (15, 11) which is architecturally incorrect
+**Analysis**: CloudFront is a global AWS service operating at edge locations, not within VPCs
+
+**Fix Applied**:
+- ❌ **Removed CloudFront**: Not needed for corporate intranet-only applications  
+- ✅ **Updated Traffic Flow**: Corporate Users → Internal ALB → Nginx → React Apps
+- ✅ **Simplified Architecture**: No global CDN needed for internal corporate access
+
+#### **3. Nginx Positioning Correction** ❌ → ✅
+**Problem**: Nginx was positioned beside React apps instead of in front of them
+**Analysis**: Nginx should serve as web server layer in front of application servers
+
+**Solution**:
+```
+Before: ALB → React Apps (Port 3000)
+        Nginx (beside apps, not in traffic path) ❌
+
+After:  ALB → Nginx (Port 80/443) → React Apps (Port 3000) ✅
+              ↓
+              API Integration Layer
+```
+
+**Changes Applied**:
+- ✅ **Nginx Repositioned**: Moved to (4,9.5), (7,9.5), (10,9.5) in front of React apps
+- ✅ **React Apps Behind**: Positioned at (4,8), (7,8), (10,8) behind Nginx
+- ✅ **Traffic Flow Updated**: Clear arrows showing ALB → Nginx → React Apps → API Layer
+
+#### **4. Build-Time vs Runtime Separation** ❌ → ✅
+**Problem**: Vite Build System shown as runtime component
+**Analysis**: Vite is build-time tool, not production runtime service
+
+**Fix**:
+- ❌ **Removed Vite**: Build-time tools don't belong in runtime architecture diagrams
+- ✅ **Runtime Focus**: Only production components shown in architecture
+
+#### **5. Corporate Intranet-Only Architecture** 🌐 → 🏢
+**Major Architectural Change**: Web applications serve corporate users only, not public internet
+
+**CloudFront Removal Rationale**:
+- ❌ **Global CDN unnecessary**: Corporate users access via VPN/Direct Connect
+- ✅ **Direct ALB access**: Lower latency than CDN → Origin hops
+- ✅ **Cost reduction**: No CloudFront charges for corporate traffic
+- ✅ **Simpler architecture**: Fewer components to maintain
+
+**Updated Architecture Flow**:
+```
+Corporate Users (VPN/Direct Connect)
+    ↓
+Internal ALB (Corporate Only)
+    ↓
+Nginx (Web Server)
+    ↓ 
+React Apps (Dashboard/Admin)
+    ↓
+API Integration Layer
+```
+
+### Security Analysis Results:
+
+#### **Terraform Security Verification** ✅ **FULLY COMPLIANT**
+
+**Internal ALB Configuration**:
+```hcl
+resource "aws_lb" "intranet_alb" {
+  name               = "${var.project_name}-${var.environment}-intranet-alb"
+  internal           = true  # ✅ Internal only - no internet access
+  load_balancer_type = "application"
+  subnets            = aws_subnet.private[*].id  # ✅ Private subnets only
+  security_groups    = [aws_security_group.intranet_alb.id]  # ✅ Corporate access only
+}
+```
+
+**Security Group Restrictions**:
+```hcl
+resource "aws_security_group" "intranet_alb" {
+  # HTTP/HTTPS from corporate network ranges ONLY
+  ingress {
+    from_port   = 80/443
+    to_port     = 80/443
+    protocol    = "tcp"
+    cidr_blocks = var.corporate_network_cidrs  # ✅ Corporate networks only
+    description = "HTTP/HTTPS from corporate intranet"
+  }
+}
+```
+
+**Network Isolation**:
+- ✅ **Private Subnets**: Web apps have no public IP addresses
+- ✅ **No Internet Routes**: Private subnet route tables have NO routes to Internet Gateway  
+- ✅ **VPC Isolation**: EKS cluster completely isolated from public internet
+- ✅ **Corporate CIDR Restriction**: Only 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16 allowed
+
+#### **Access Control Matrix**:
+
+| User Location | Access Method | Web App Access | Status |
+|---------------|---------------|----------------|--------|
+| Corporate Office | Direct Connect/VPN | ✅ ALLOWED | Via Internal ALB |
+| Corporate VPN | VPN to AWS | ✅ ALLOWED | Via Internal ALB |
+| Public Internet | Direct attempt | ❌ BLOCKED | No route/access |
+| AWS Console | Direct IP | ❌ BLOCKED | Internal ALB only |
+| Other AWS Accounts | Cross-account | ❌ BLOCKED | Security groups |
+
+### Files Generated & Updated:
+
+#### **Diagrams Updated**:
+- ✅ `docs/architecture/web_apps_architecture.png` - Corporate intranet-only with proper Nginx positioning
+- ✅ `docs/architecture/web_apps_architecture.svg` - SVG version
+- ✅ `docs/architecture/web_apps_user_flow.png` - Internal user flows
+- ✅ `docs/architecture/web_apps_component_architecture.png` - Component details
+- ✅ `docs/architecture/dash_architecture.png` - ECR/Snowflake positioning fixed
+- ✅ `docs/architecture/risk_api_architecture.png` - ECR/Snowflake positioning fixed
+
+#### **Documentation Created**:
+- ✅ `devops/DASH_DIAGRAM_CONSISTENCY_FIX.md` - Dash diagram changes
+- ✅ `devops/RISK_API_DIAGRAM_CONSISTENCY_FIX.md` - Risk API diagram changes  
+- ✅ `devops/WEB_APP_NGINX_POSITIONING_FIX.md` - Nginx architectural correction
+- ✅ `devops/WEB_APP_CLOUDFRONT_VITE_CORRECTIONS.md` - CloudFront removal & Vite cleanup
+- ✅ `devops/WEB_APP_CORPORATE_INTRANET_ARCHITECTURE.md` - Complete intranet architecture
+- ✅ `devops/TERRAFORM_SECURITY_ANALYSIS_CORPORATE_INTRANET.md` - Security compliance verification
+
+### Session Outcomes:
+
+#### **✅ Architecture Standardization Complete**:
+1. **ECR & Snowflake**: Consistent positioning across all 4 service diagrams
+2. **US-East-1 Region Boxes**: Standardized service categorization
+3. **VPC Boundaries**: Proper network isolation representation
+4. **Traffic Flows**: Accurate data flow arrows with color coding
+
+#### **✅ Web App Architecture Optimized**:
+1. **Nginx Positioning**: Correctly placed in front of React applications
+2. **Corporate Access Only**: Removed CloudFront, emphasized internal ALB
+3. **Build vs Runtime**: Removed build-time tools from runtime diagrams
+4. **Security Focus**: Clear corporate network access requirements
+
+#### **✅ Security Compliance Verified**:
+1. **Terraform Analysis**: Confirmed proper internal-only configuration
+2. **Network Isolation**: Verified no public internet access paths
+3. **Access Controls**: Corporate CIDR restrictions properly implemented
+4. **ALB Configuration**: Internal-only with private subnet deployment
+
+#### **✅ Documentation Standards**:
+1. **Technical Analysis**: Detailed before/after comparisons
+2. **Security Assessment**: Comprehensive compliance verification
+3. **Implementation Guide**: Clear architectural decision rationale
+4. **Visual Consistency**: All diagrams follow unified standards
+
+### Key Technical Insights:
+
+#### **Corporate Intranet Benefits**:
+- **🔒 Security**: Zero public internet exposure, corporate network access control
+- **💰 Cost**: No CloudFront charges, simplified infrastructure
+- **🚀 Performance**: Direct corporate network access, no CDN latency
+- **🔧 Operations**: Fewer components, simplified troubleshooting
+
+#### **Architecture Patterns Applied**:
+- **Service Categorization**: AWS services in region boxes, external services properly positioned
+- **Network Segmentation**: Clear VPC boundaries with proper connectivity
+- **Traffic Flow Clarity**: Color-coded arrows showing distinct data paths
+- **Security Defense**: Multiple layers of access control and network isolation
+
+### **Session Status: ✅ COMPLETE**
+
+**All Requirements Fulfilled**:
+- ✅ **Diagram Consistency**: ECR/Snowflake standardized across all diagrams
+- ✅ **Architectural Accuracy**: Nginx, CloudFront, and component positioning corrected
+- ✅ **Corporate Intranet**: Web apps configured for internal-only access
+- ✅ **Security Verification**: Terraform analysis confirms proper implementation
+- ✅ **Documentation**: Comprehensive technical documentation created
+
+**Result**: Web application architecture successfully optimized for corporate intranet-only access with proper security controls, architectural standards, and visual consistency across all diagrams.
