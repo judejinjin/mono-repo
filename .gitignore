@@ -134,6 +134,7 @@ env.bak/
 venv.bak/
 virtualenv/
 .virtualenv/
+terraform_venv/
 
 # Spyder project settings
 .spyderproject
