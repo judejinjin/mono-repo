@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 class DeploymentManager:
     """Manages deployment processes for different targets and environments."""
     
-    def __init__(self, environment: str = None):
+    def __init__(self, environment: str = None, branch: str = None):
         # Set up AWS environment from config/.env file
         setup_aws_environment()
         
@@ -35,7 +35,109 @@ class DeploymentManager:
         self.project_root = PROJECT_ROOT
         self.deploy_dir = self.project_root / 'deploy'
         self.deploy_config = self._load_deploy_config()
+        self.branch = branch or self.deploy_config.get('branch', self._get_branch_for_environment())
+        
+    def _get_branch_for_environment(self) -> str:
+        """Get the appropriate branch for the current environment."""
+        branch_mapping = {
+            'dev': 'develop',
+            'uat': 'uat', 
+            'prod': 'master'
+        }
+        return branch_mapping.get(self.environment, 'master')
     
+    def deploy_with_branch_build(self, components: List[str] = None) -> bool:
+        """Deploy application with branch-specific build."""
+        logger.info(f"Deploying with branch build - Environment: {self.environment}, Branch: {self.branch}")
+        
+        components = components or ['services', 'web', 'dash', 'airflow']
+        
+        # Step 1: Build Docker images for the specific branch
+        if not self._build_branch_images(components):
+            return False
+        
+        # Step 2: Push images to registry
+        if not self._push_images(components):
+            return False
+        
+        # Step 3: Deploy components
+        success = True
+        for component in components:
+            if not self.deploy_component(component):
+                success = False
+                logger.error(f"Failed to deploy component: {component}")
+        
+        return success
+    
+    def _build_branch_images(self, components: List[str]) -> bool:
+        """Build Docker images for specific branch."""
+        logger.info(f"Building images for branch: {self.branch}")
+        
+        build_script = self.project_root / 'build' / 'build.py'
+        
+        # Mapping of components to Docker services
+        service_mapping = {
+            'services': ['risk-api', 'data-pipeline'],
+            'web': ['base'],  # Assuming web uses base image
+            'dash': ['base'],  # Assuming dash uses base image
+            'airflow': ['airflow']
+        }
+        
+        for component in components:
+            services = service_mapping.get(component, [])
+            for service in services:
+                cmd = [
+                    sys.executable, str(build_script),
+                    '--environment', self.environment,
+                    '--branch', self.branch,
+                    '--docker-service', service
+                ]
+                
+                result = subprocess.run(cmd, capture_output=True, text=True)
+                if result.returncode != 0:
+                    logger.error(f"Failed to build {service}: {result.stderr}")
+                    return False
+                
+                logger.info(f"✅ Successfully built {service}")
+        
+        return True
+    
+    def _push_images(self, components: List[str]) -> bool:
+        """Push Docker images to registry."""
+        logger.info("Pushing images to registry...")
+        
+        registry_url = self.deploy_config.get('registry', {}).get('url', 'jfrog.corporate.local')
+        image_tag = self.deploy_config.get('image_tag', f'{self.environment}-{self.branch}')
+        
+        service_mapping = {
+            'services': ['risk-api', 'data-pipeline'],
+            'web': ['base'],
+            'dash': ['base'],
+            'airflow': ['airflow']
+        }
+        
+        for component in components:
+            services = service_mapping.get(component, [])
+            for service in services:
+                local_image = f'mono-repo/{service}:{self.environment}-{self.branch}'
+                remote_image = f'{registry_url}/mono-repo/{service}:{image_tag}'
+                
+                # Tag for registry
+                tag_cmd = ['docker', 'tag', local_image, remote_image]
+                if subprocess.run(tag_cmd).returncode != 0:
+                    logger.error(f"Failed to tag image: {service}")
+                    return False
+                
+                # Push to registry
+                push_cmd = ['docker', 'push', remote_image]
+                if subprocess.run(push_cmd).returncode != 0:
+                    logger.error(f"Failed to push image: {service}")
+                    return False
+                
+                logger.info(f"✅ Pushed {remote_image}")
+        
+        return True
+
     def _load_deploy_config(self) -> Dict[str, Any]:
         """Load deployment configuration for current environment."""
         config_file = self.deploy_dir / 'configs' / f'{self.environment}.yaml'
@@ -298,13 +400,18 @@ def main():
     """Main entry point."""
     parser = argparse.ArgumentParser(description='Deploy mono-repo components')
     parser.add_argument('--target', 
-                        choices=['infrastructure', 'applications', 'services', 'web', 'dash', 'airflow', 'database'],
+                        choices=['infrastructure', 'applications', 'services', 'web', 'dash', 'airflow', 'database', 'build-and-deploy'],
                         required=True, help='Deployment target')
     parser.add_argument('--environment', choices=['dev', 'uat', 'prod'],
                         help='Target environment')
+    parser.add_argument('--branch', 
+                        help='Git branch to deploy (defaults to environment-appropriate branch)')
     parser.add_argument('--component', help='Specific component to deploy')
     parser.add_argument('--action', choices=['deploy', 'migrate', 'rollback'],
                         default='deploy', help='Deployment action')
+    parser.add_argument('--components', nargs='+', 
+                        choices=['services', 'web', 'dash', 'airflow'],
+                        help='Multiple components to build and deploy')
     
     args = parser.parse_args()
     
@@ -312,7 +419,7 @@ def main():
     if args.environment:
         os.environ['ENV'] = args.environment
     
-    deployment_manager = DeploymentManager(args.environment)
+    deployment_manager = DeploymentManager(args.environment, args.branch)
     
     success = False
     
@@ -320,6 +427,10 @@ def main():
         success = deployment_manager.deploy_infrastructure()
     elif args.target == 'applications':
         success = deployment_manager.deploy_applications()
+    elif args.target == 'build-and-deploy':
+        # New branch-aware build and deploy option
+        components = args.components or ['services', 'web', 'dash', 'airflow']
+        success = deployment_manager.deploy_with_branch_build(components)
     elif args.target in ['services', 'web', 'dash', 'airflow', 'database']:
         success = deployment_manager.deploy_component(args.target)
     

@@ -1,6 +1,8 @@
 # Development Deployment Configuration
 
-image_tag: "dev-latest"
+# Branch and Image Configuration
+branch: "develop"
+image_tag: "dev-develop"
 
 # Container Registry Configuration
 registry:

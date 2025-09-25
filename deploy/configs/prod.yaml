@@ -1,6 +1,8 @@
 # Production Deployment Configuration
 
-image_tag: "prod-latest"
+# Branch and Image Configuration
+branch: "master"
+image_tag: "prod-master"
 
 # Container Registry Configuration
 registry:

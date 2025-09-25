@@ -1,6 +1,8 @@
 # UAT Deployment Configuration
 
-image_tag: "uat-latest"
+# Branch and Image Configuration
+branch: "uat"
+image_tag: "uat-uat"
 
 # Container Registry Configuration
 registry:
