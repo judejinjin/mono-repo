@@ -2,7 +2,7 @@
 
 This document provides an index of all generated architecture diagrams for the Risk Platform with JupyterHub integration.
 
-## Generated: September 28, 2025
+## Generated: September 29, 2025 - **UPDATED WITH LATEST IMPLEMENTATIONS** ✨
 
 ## 📊 **Main Architecture Diagrams**
 
@@ -23,7 +23,101 @@ This document provides an index of all generated architecture diagrams for the R
 ### Visual Overview ✨ **NEW!**
 - `DIAGRAM_OVERVIEW.png` - **Complete visual guide to all available diagrams**
 
-## 🔬 **JupyterHub Integration Diagrams**
+## � **Performance Optimization Diagrams** ✨ **NEW!**
+
+Located in `/docs/architecture/`:
+
+### Caching Architecture
+- `performance_caching_architecture.png/svg` - **Complete caching strategy implementation**
+  - Redis cluster deployment and configuration
+  - Cache layers for API responses, database queries, and static content
+  - Cache invalidation strategies and performance metrics
+  - Integration with Kubernetes and monitoring systems
+
+### Performance Monitoring
+- `performance_monitoring_optimization.png/svg` - **Real-time performance tracking**
+  - CloudWatch metrics collection and dashboards
+  - Application performance monitoring (APM) integration
+  - Database query optimization tracking
+  - Resource utilization and scaling triggers
+
+### Async Processing
+- `async_processing_architecture.png/svg` - **Asynchronous task processing**
+  - Celery worker deployment with Redis broker
+  - Background job processing workflows
+  - Queue management and task distribution
+  - Error handling and retry mechanisms
+
+## 🔐 **Security Framework Diagrams** ✨ **NEW!**
+
+Located in `/docs/architecture/`:
+
+### Authentication Flow
+- `security_authentication_flow.png/svg` - **Complete authentication workflow**
+  - OAuth 2.0/OpenID Connect integration
+  - JWT token lifecycle management
+  - Session handling and refresh mechanisms
+  - Multi-environment authentication patterns
+
+### RBAC Matrix
+- `security_rbac_matrix.png/svg` - **Role-Based Access Control system**
+  - User roles and permission matrices
+  - Resource-level access controls
+  - API endpoint security mapping
+  - Administrative and audit capabilities
+
+### MFA Workflow
+- `security_mfa_workflow.png/svg` - **Multi-Factor Authentication process**
+  - Primary authentication verification
+  - MFA challenge and response flow
+  - Backup authentication methods
+  - Security token management
+
+## 📈 **Enhanced Monitoring Stack** ✨ **NEW!**
+
+Located in `/docs/architecture/`:
+
+### CloudWatch Integration
+- `cloudwatch_metrics_dashboards.png/svg` - **CloudWatch metrics and dashboards**
+  - Custom metrics collection from all services
+  - Real-time dashboard configuration
+  - Automated alerting and notification setup
+  - Performance baseline tracking
+
+### Logging Architecture
+- `logging_aggregation_analysis.png/svg` - **Centralized logging system**
+  - Log aggregation from all platform components
+  - ElasticSearch/CloudWatch Logs integration
+  - Log parsing and structured data extraction
+  - Audit trail and compliance logging
+
+### Alerting Systems
+- `alerting_notification_systems.png/svg` - **Comprehensive alerting framework**
+  - Multi-channel notification delivery (Email, Slack, SMS)
+  - Escalation policies and on-call management
+  - Alert correlation and noise reduction
+  - Incident response workflow integration
+
+## 🔄 **Updated Platform Architecture** ✨ **NEW!**
+
+Located in `/docs/architecture/`:
+
+### Updated Risk Platform
+- `updated_risk_platform_architecture.png/svg` - **Complete production-ready architecture**
+  - All Phase 2/3 implementations integrated
+  - Performance optimization layers
+  - Security framework integration
+  - Real data source connections
+  - Comprehensive monitoring and observability
+
+### Updated CI/CD Pipeline
+- `updated_cicd_pipeline.png/svg` - **Enhanced deployment pipeline**
+  - Automated testing integration
+  - Security scanning and compliance checks
+  - Multi-environment promotion workflow
+  - Rollback and disaster recovery procedures
+
+## �🔬 **JupyterHub Integration Diagrams**
 
 Located in `/docs/diagrams/jupyterhub/`:
 

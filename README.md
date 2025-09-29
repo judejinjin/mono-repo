@@ -15,6 +15,21 @@ This project implements a modern cloud-native architecture with the following co
 - **Applications**: FastAPI services, React/Vue web apps, Dash analytics dashboards
 - **Databases**: PostgreSQL on Amazon RDS, Snowflake for data warehousing
 - **Storage**: Amazon S3 for data and artifacts
+- **Performance**: Redis caching, async processing, comprehensive monitoring
+- **Security**: OAuth 2.0/RBAC authentication, MFA, comprehensive security framework
+
+## 📊 Architecture Diagrams ✨ **UPDATED**
+
+**80+ comprehensive diagrams** covering all platform components and recent implementations:
+
+- 📋 **[Complete Diagram Index](docs/DIAGRAM_INDEX.md)** - Full catalog of all available diagrams
+- 🆕 **[Latest Updates Summary](docs/DIAGRAM_UPDATES_SUMMARY.md)** - Sept 29, 2025 diagram updates
+- 🚀 **Performance Optimization Diagrams** - Caching, async processing, monitoring
+- 🔐 **Security Framework Diagrams** - Authentication, RBAC, MFA workflows  
+- 📈 **Enhanced Monitoring Diagrams** - CloudWatch, logging, alerting
+- 🔄 **Updated Architecture Diagrams** - Complete production-ready platform
+
+**View all diagrams**: [`docs/architecture/`](docs/architecture/)
 
 ## 📁 Project Structure
 
