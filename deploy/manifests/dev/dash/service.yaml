@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: dash-service
+  namespace: mono-repo-dev
+  labels:
+    app: dash
+    environment: dev
+spec:
+  type: ClusterIP
+  ports:
+  - port: 80
+    targetPort: 8050
+    protocol: TCP
+    name: http
+  selector:
+    app: dash
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: dash-config
+  namespace: mono-repo-dev
+data:
+  ENV: "dev"
+  PORT: "8050"
+  LOG_LEVEL: "INFO"
+  DASH_DEBUG: "false"

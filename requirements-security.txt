@@ -1,0 +1,51 @@
+# Security Framework Requirements
+# Authentication and authorization dependencies
+
+# Core security
+bcrypt==4.1.2               # Password hashing
+PyJWT==2.8.0               # JWT token handling
+cryptography==41.0.8       # Cryptographic functions
+passlib==1.7.4             # Password utilities
+
+# Multi-factor authentication
+pyotp==2.9.0               # TOTP (Time-based OTP)
+qrcode==7.4.2              # QR code generation for MFA setup
+Pillow==10.1.0             # Image processing for QR codes
+
+# Email services
+aiosmtplib==3.0.1          # Async SMTP client
+email-validator==2.1.0.post1  # Email validation
+
+# Rate limiting and caching
+redis==5.0.1               # Redis client for rate limiting
+hiredis==2.2.3             # Fast Redis parser
+
+# Security scanning
+safety==2.3.5              # Dependency vulnerability scanner
+bandit==1.7.5              # Security linting for Python
+
+# IP address handling
+ipaddress==1.0.23          # IP address validation (built-in, but explicit)
+
+# Additional security utilities
+secrets                     # Cryptographically secure random generation (built-in)
+hashlib                     # Hash functions (built-in)
+hmac                       # HMAC implementation (built-in)
+
+# Validation and sanitization
+pydantic==2.5.2           # Data validation (already in main requirements)
+bleach==6.1.0              # HTML sanitization
+python-multipart==0.0.6   # Form data parsing
+
+# Monitoring and logging
+structlog==23.2.0          # Structured logging
+sentry-sdk==1.40.6         # Error tracking and monitoring
+
+# Network security
+httpx==0.25.2              # HTTP client with security features
+certifi==2023.11.17        # Certificate validation
+urllib3==2.1.0             # HTTP library with security patches
+
+# Development and testing security tools
+pytest-security==0.1.0     # Security testing for pytest
+faker==21.0.0              # Fake data generation for testing

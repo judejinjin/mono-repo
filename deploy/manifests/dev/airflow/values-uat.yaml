@@ -1,0 +1,82 @@
+# Airflow Helm Values for UAT Environment
+
+nameOverride: airflow-uat
+fullnameOverride: airflow-uat
+
+airflow:
+  version: "2.7.0"
+  executor: KubernetesExecutor
+  
+  # Airflow configuration
+  config:
+    AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: "False"
+    AIRFLOW__CORE__LOAD_EXAMPLES: "False"
+    AIRFLOW__WEBSERVER__EXPOSE_CONFIG: "False"
+    AIRFLOW__KUBERNETES__NAMESPACE: "airflow-uat"
+    
+env:
+  - name: ENV
+    value: "uat"
+
+# Web server configuration
+webserver:
+  replicas: 1
+  service:
+    type: ClusterIP
+    port: 8080
+  
+  resources:
+    requests:
+      cpu: 200m
+      memory: 512Mi
+    limits:
+      cpu: 1
+      memory: 1Gi
+
+# Scheduler configuration
+scheduler:
+  replicas: 1
+  resources:
+    requests:
+      cpu: 200m
+      memory: 512Mi
+    limits:
+      cpu: 1
+      memory: 1Gi
+
+# Worker configuration (KubernetesExecutor)
+workers:
+  replicas: 0  # Using KubernetesExecutor
+  
+# DAGs storage
+dags:
+  persistence:
+    enabled: false
+  gitSync:
+    enabled: true
+    repo: https://github.com/your-org/mono-repo.git
+    branch: main
+    subPath: dags
+    wait: 60
+
+# Database (use external PostgreSQL)
+postgresql:
+  enabled: false
+
+externalDatabase:
+  type: postgresql
+  host: riskdb-uat.cluster-xyz.us-east-1.rds.amazonaws.com
+  port: 5432
+  database: airflow_uat
+  user: airflow
+  passwordSecret: airflow-db-secret
+  passwordSecretKey: password
+
+# Redis (for KubernetesExecutor, we don't need Redis)
+redis:
+  enabled: false
+
+# Service account
+serviceAccount:
+  create: true
+  name: airflow-uat

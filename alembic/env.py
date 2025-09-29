@@ -9,8 +9,7 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 # Import your models here
-# from src.models import Base
-# from src.database import Base
+from libs.storage.models import Base
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -22,8 +21,7 @@ if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
 # Set target metadata
-# Replace this with your actual models Base.metadata
-target_metadata = None
+target_metadata = Base.metadata
 
 # For multiple databases:
 # from myapp import mymodel

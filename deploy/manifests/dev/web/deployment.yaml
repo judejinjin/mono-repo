@@ -1,0 +1,89 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-app
+  namespace: {namespace}
+  labels:
+    app: web
+    environment: {environment}
+spec:
+  replicas: {replicas_web}
+  selector:
+    matchLabels:
+      app: web
+  template:
+    metadata:
+      labels:
+        app: web
+        environment: {environment}
+    spec:
+      imagePullSecrets:
+      - name: ecr-registry-secret
+      containers:
+      - name: web
+        image: "{registry_url}/mono-repo/web:{image_tag}"
+        ports:
+        - containerPort: 3000
+        env:
+        - name: ENV
+          value: "{environment}"
+        - name: REACT_APP_API_URL
+          value: "{web_api_base_url}"
+        resources:
+          requests:
+            cpu: {resources_web_cpu}
+            memory: {resources_web_memory}
+          limits:
+            cpu: {resources_web_limits_cpu}
+            memory: {resources_web_limits_memory}
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 3000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 3000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: web-service
+  namespace: {namespace}
+  labels:
+    app: web
+    environment: {environment}
+spec:
+  selector:
+    app: web
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 3000
+  type: ClusterIP
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: web-ingress
+  namespace: {namespace}
+  annotations:
+    kubernetes.io/ingress.class: "alb"
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+spec:
+  rules:
+  - host: {web_domain}
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: web-service
+            port:
+              number: 80

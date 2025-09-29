@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: web-service
+  namespace: {namespace}
+  labels:
+    app: web
+    environment: {environment}
+spec:
+  type: ClusterIP
+  ports:
+  - port: 80
+    targetPort: 3000
+    protocol: TCP
+    name: http
+  selector:
+    app: web
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: web-config
+  namespace: {namespace}
+data:
+  ENV: "{environment}"
+  REACT_APP_API_URL: "{web_api_base_url}"
+  REACT_APP_ENVIRONMENT: "{environment}"

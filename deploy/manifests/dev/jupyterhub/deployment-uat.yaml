@@ -1,0 +1,187 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jupyterhub-hub
+  namespace: jupyterhub
+  labels:
+    app.kubernetes.io/name: jupyterhub
+    app.kubernetes.io/component: hub
+    app.kubernetes.io/version: "4.0.2"
+    environment: uat
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: jupyterhub
+      app.kubernetes.io/component: hub
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: jupyterhub
+        app.kubernetes.io/component: hub
+        app.kubernetes.io/version: "4.0.2"
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8081"
+        prometheus.io/path: "/hub/metrics"
+    spec:
+      serviceAccountName: jupyterhub-service-account
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+      containers:
+      - name: jupyterhub
+        image: quay.io/jupyterhub/jupyterhub:4.0.2
+        imagePullPolicy: IfNotPresent
+        ports:
+        - name: http
+          containerPort: 8000
+          protocol: TCP
+        - name: metrics
+          containerPort: 8081
+          protocol: TCP
+        env:
+        - name: JUPYTERHUB_API_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: jupyterhub-secrets
+              key: api_token
+        - name: JUPYTERHUB_COOKIE_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: jupyterhub-secrets
+              key: cookie_secret
+        - name: JUPYTERHUB_CRYPT_KEY
+          valueFrom:
+            secretKeyRef:
+              name: jupyterhub-secrets
+              key: crypto_key
+        - name: JUPYTERHUB_DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: jupyterhub-secrets
+              key: database_url
+        - name: ENVIRONMENT
+          value: "uat"
+        - name: ECR_REGISTRY
+          value: "YOUR_ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com"
+        - name: OAUTH_CLIENT_ID
+          valueFrom:
+            secretKeyRef:
+              name: jupyterhub-oauth-secrets
+              key: client_id
+        - name: OAUTH_CLIENT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: jupyterhub-oauth-secrets
+              key: client_secret
+        - name: OAUTH_AUTHORIZE_URL
+          value: "https://uat-auth.company.com/oauth/authorize"
+        - name: OAUTH_TOKEN_URL
+          value: "https://uat-auth.company.com/oauth/token"
+        - name: OAUTH_USERDATA_URL
+          value: "https://uat-auth.company.com/oauth/userinfo"
+        volumeMounts:
+        - name: config
+          mountPath: /etc/jupyterhub
+          readOnly: true
+        - name: shared-storage
+          mountPath: /home/jovyan/shared
+        command:
+        - jupyterhub
+        - --config
+        - /etc/jupyterhub/jupyterhub_config.py
+        resources:
+          requests:
+            cpu: 750m
+            memory: 1.5Gi
+          limits:
+            cpu: 3000m
+            memory: 6Gi
+        livenessProbe:
+          httpGet:
+            path: /hub/health
+            port: 8000
+          initialDelaySeconds: 60
+          periodSeconds: 30
+          timeoutSeconds: 10
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /hub/health
+            port: 8000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+      volumes:
+      - name: config
+        configMap:
+          name: jupyterhub-config
+      - name: shared-storage
+        persistentVolumeClaim:
+          claimName: jupyterhub-shared-pvc
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jupyterhub-management
+  namespace: jupyterhub
+  labels:
+    app.kubernetes.io/name: jupyterhub-management
+    app.kubernetes.io/component: api
+    environment: uat
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: jupyterhub-management
+      app.kubernetes.io/component: api
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: jupyterhub-management
+        app.kubernetes.io/component: api
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8000"
+    spec:
+      serviceAccountName: jupyterhub-service-account
+      containers:
+      - name: jupyterhub-management
+        image: mono-repo/jupyterhub-management:uat-master
+        imagePullPolicy: IfNotPresent
+        ports:
+        - name: http
+          containerPort: 8000
+          protocol: TCP
+        env:
+        - name: JUPYTERHUB_API_URL
+          value: "http://jupyterhub-service.jupyterhub.svc.cluster.local:8000"
+        - name: JUPYTERHUB_API_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: jupyterhub-secrets
+              key: api_token
+        - name: RISK_API_URL
+          value: "http://fastapi-service.default.svc.cluster.local"
+        resources:
+          requests:
+            cpu: 250m
+            memory: 512Mi
+          limits:
+            cpu: 1000m
+            memory: 2Gi
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 30
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 10
+          periodSeconds: 10

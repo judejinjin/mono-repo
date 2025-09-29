@@ -3,8 +3,9 @@ FastAPI Risk Management Service
 Provides REST API endpoints for risk management operations.
 """
 
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import FastAPI, HTTPException, Depends, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel
 from typing import List, Dict, Any, Optional
 from datetime import datetime
@@ -18,8 +19,14 @@ sys.path.insert(0, str(PROJECT_ROOT))
 from libs.business.risk_management import RiskCalculator, MarketDataProcessor
 from libs.business.analytics import ReportGenerator
 from libs.db import get_session, execute_query
+from libs.auth import AuthManager, get_current_user
+from libs.monitoring import log_user_action, log_auth_event, request_context, add_health_endpoints
 from sqlalchemy import text
 from config import get_config
+
+# Authentication setup
+security = HTTPBearer()
+auth_manager = AuthManager()
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -27,6 +34,9 @@ app = FastAPI(
     description="API for risk calculations and market data processing",
     version="1.0.0"
 )
+
+# Add health check endpoints
+add_health_endpoints(app, "risk-api")
 
 # Add CORS middleware
 app.add_middleware(
@@ -37,7 +47,57 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Authentication dependency
+async def get_current_user_from_token(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    """Extract and validate user from JWT token."""
+    try:
+        payload = auth_manager.jwt_handler.decode_token(credentials.credentials)
+        username = payload.get('sub')
+        if username is None:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid token",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        user = auth_manager.get_user(username)
+        if user is None:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="User not found",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        return user
+    except Exception as e:
+        log_auth_event('token_validation', result='failure', details={'error': str(e)})
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+# Authorization dependency
+def require_permission(permission: str):
+    """Dependency factory for permission-based access control."""
+    def check_permission(current_user = Depends(get_current_user_from_token)):
+        if not auth_manager.check_permission(current_user, permission):
+            log_user_action('permission_denied', current_user.username, 
+                          details={'required_permission': permission})
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Insufficient permissions. Required: {permission}"
+            )
+        return current_user
+    return check_permission
+
 # Pydantic models
+class LoginRequest(BaseModel):
+    username: str
+    password: str
+
+class LoginResponse(BaseModel):
+    access_token: str
+    token_type: str
+    user: Dict[str, Any]
 class RiskMetricsRequest(BaseModel):
     portfolio_id: str
     calculation_date: Optional[str] = None
@@ -72,6 +132,51 @@ def get_report_generator():
     return ReportGenerator()
 
 # API Endpoints
+@app.post("/auth/login", response_model=LoginResponse)
+async def login(login_request: LoginRequest):
+    """Authenticate user and return JWT token."""
+    try:
+        user = auth_manager.authenticate_user(login_request.username, login_request.password)
+        if not user:
+            log_auth_event('login_attempt', login_request.username, result='failure')
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid username or password",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        
+        # Generate JWT token
+        access_token = auth_manager.jwt_handler.generate_token({'sub': user.username})
+        
+        log_auth_event('login', user.username, result='success')
+        log_user_action('login', user.username)
+        
+        return LoginResponse(
+            access_token=access_token,
+            token_type="bearer",
+            user={
+                'username': user.username,
+                'email': user.email,
+                'role': user.role,
+                'first_name': user.first_name,
+                'last_name': user.last_name
+            }
+        )
+    except Exception as e:
+        log_auth_event('login_error', login_request.username, result='error', details={'error': str(e)})
+        raise HTTPException(status_code=500, detail=f"Authentication failed: {str(e)}")
+
+@app.post("/auth/logout")
+async def logout(current_user = Depends(get_current_user_from_token)):
+    """Logout user and invalidate token."""
+    try:
+        # In a real implementation, you might want to blacklist the token
+        log_user_action('logout', current_user.username)
+        log_auth_event('logout', current_user.username, result='success')
+        return {"message": "Successfully logged out"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Logout failed: {str(e)}")
+
 @app.get("/")
 async def root():
     """Root endpoint with API information."""
@@ -79,75 +184,99 @@ async def root():
         "service": "Risk Management API",
         "version": "1.0.0",
         "status": "healthy",
-        "timestamp": datetime.utcnow().isoformat()
+        "timestamp": datetime.utcnow().isoformat(),
+        "endpoints": {
+            "health": "/health",
+            "detailed_health": "/health/detailed",
+            "liveness": "/health/liveness",
+            "readiness": "/health/readiness",
+            "metrics": "/metrics",
+            "docs": "/docs",
+            "api": "/api/v1"
+        }
     }
-
-@app.get("/health")
-async def health_check():
-    """Health check endpoint."""
-    return {"status": "healthy", "timestamp": datetime.utcnow().isoformat()}
 
 @app.post("/api/v1/risk/calculate", response_model=RiskMetricsResponse)
 async def calculate_risk_metrics(
     request: RiskMetricsRequest,
-    calculator: RiskCalculator = Depends(get_risk_calculator)
+    calculator: RiskCalculator = Depends(get_risk_calculator),
+    current_user = Depends(require_permission("risk:calculate"))
 ):
     """Calculate risk metrics for a portfolio."""
     try:
-        risk_metrics = calculator.calculate_portfolio_risk(request.portfolio_id)
-        return RiskMetricsResponse(**risk_metrics)
+        with request_context(user_id=current_user.username):
+            log_user_action('risk_calculation', current_user.username, 
+                          resource='portfolio', details={'portfolio_id': request.portfolio_id})
+            risk_metrics = calculator.calculate_portfolio_risk(request.portfolio_id)
+            return RiskMetricsResponse(**risk_metrics)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Risk calculation failed: {str(e)}")
 
 @app.get("/api/v1/portfolios")
-async def get_portfolios():
+async def get_portfolios(current_user = Depends(require_permission("portfolio:read"))):
     """Get list of all portfolios."""
-    # Mock implementation
-    portfolios = [
-        {"portfolio_id": "EQUITY_GROWTH", "name": "Equity Growth Portfolio", "active": True},
-        {"portfolio_id": "FIXED_INCOME", "name": "Fixed Income Portfolio", "active": True},
-        {"portfolio_id": "BALANCED", "name": "Balanced Portfolio", "active": True},
-        {"portfolio_id": "EMERGING_MARKETS", "name": "Emerging Markets Portfolio", "active": True},
-    ]
-    return {"portfolios": portfolios}
+    with request_context(user_id=current_user.username):
+        log_user_action('view_portfolios', current_user.username)
+        # Mock implementation
+        portfolios = [
+            {"portfolio_id": "EQUITY_GROWTH", "name": "Equity Growth Portfolio", "active": True},
+            {"portfolio_id": "FIXED_INCOME", "name": "Fixed Income Portfolio", "active": True},
+            {"portfolio_id": "BALANCED", "name": "Balanced Portfolio", "active": True},
+            {"portfolio_id": "EMERGING_MARKETS", "name": "Emerging Markets Portfolio", "active": True},
+        ]
+        return {"portfolios": portfolios}
 
 @app.get("/api/v1/portfolios/{portfolio_id}/risk")
 async def get_portfolio_risk(
     portfolio_id: str,
-    calculator: RiskCalculator = Depends(get_risk_calculator)
+    calculator: RiskCalculator = Depends(get_risk_calculator),
+    current_user = Depends(require_permission("risk:read"))
 ):
     """Get current risk metrics for a specific portfolio."""
     try:
-        risk_metrics = calculator.calculate_portfolio_risk(portfolio_id)
-        return risk_metrics
+        with request_context(user_id=current_user.username):
+            log_user_action('view_portfolio_risk', current_user.username, 
+                          resource='portfolio', details={'portfolio_id': portfolio_id})
+            risk_metrics = calculator.calculate_portfolio_risk(portfolio_id)
+            return risk_metrics
     except Exception as e:
         raise HTTPException(status_code=404, detail=f"Portfolio not found: {portfolio_id}")
 
 @app.post("/api/v1/market-data/process")
 async def process_market_data(
     request: MarketDataRequest,
-    processor: MarketDataProcessor = Depends(get_market_processor)
+    processor: MarketDataProcessor = Depends(get_market_processor),
+    current_user = Depends(require_permission("market_data:process"))
 ):
     """Process market data for a specific date."""
     try:
-        success = processor.process_daily_prices(request.date)
-        if success:
-            return {"status": "success", "date": request.date, "message": "Market data processed successfully"}
-        else:
-            raise HTTPException(status_code=500, detail="Market data processing failed")
+        with request_context(user_id=current_user.username):
+            log_user_action('process_market_data', current_user.username, 
+                          details={'date': request.date})
+            success = processor.process_daily_prices(request.date)
+            if success:
+                return {"status": "success", "date": request.date, "message": "Market data processed successfully"}
+            else:
+                raise HTTPException(status_code=500, detail="Market data processing failed")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Processing failed: {str(e)}")
 
 @app.get("/api/v1/market-data/status/{date}")
-async def get_market_data_status(date: str):
+async def get_market_data_status(
+    date: str,
+    current_user = Depends(require_permission("market_data:read"))
+):
     """Get market data processing status for a date."""
-    # Mock implementation
-    return {
-        "date": date,
-        "status": "completed",
-        "processed_at": datetime.utcnow().isoformat(),
-        "records_processed": 1250
-    }
+    with request_context(user_id=current_user.username):
+        log_user_action('view_market_data_status', current_user.username, 
+                      details={'date': date})
+        # Mock implementation
+        return {
+            "date": date,
+            "status": "completed",
+            "processed_at": datetime.utcnow().isoformat(),
+            "records_processed": 1250
+        }
 
 @app.post("/api/v1/reports/generate")
 async def generate_report(
