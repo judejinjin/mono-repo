@@ -29,7 +29,7 @@ try:
     import matplotlib.pyplot as plt
     import seaborn as sns
     from sqlalchemy import create_engine, text
-    from libs.performance.optimization import (
+    from .optimization import (
         get_cache_manager, get_db_optimizer, get_performance_profiler,
         PerformanceMetrics
     )

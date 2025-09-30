@@ -1,5 +1,9 @@
 # Performance Optimization Implementation Guide
 
+> **📁 FILE LOCATION UPDATE**: All performance optimization files have been moved to `tests/performance_optimization/` directory.
+> 
+> To run performance optimization scripts, navigate to: `cd tests/performance_optimization/`
+
 ## Overview
 This document provides comprehensive guidance for implementing, testing, and monitoring the performance optimization framework across the risk management infrastructure.
 
@@ -91,7 +95,7 @@ results = load_tester.run_load_test(
 #### Install Dependencies
 ```bash
 # Install performance optimization dependencies
-pip install -r requirements-performance.txt
+pip install -r tests/performance_optimization/requirements-performance.txt
 
 # Install Redis for caching
 sudo apt-get install redis-server
@@ -192,6 +196,9 @@ CMD ["python", "-O", "services/risk_api_optimized.py"]
 
 #### Execute All Performance Tests
 ```bash
+# Navigate to performance optimization directory
+cd tests/performance_optimization
+
 # Run complete performance optimization suite
 python run_performance_optimization.py --all
 
@@ -207,8 +214,11 @@ python run_performance_optimization.py --monitor 10
 
 #### Cache Performance Testing
 ```bash
+```bash
 # Test cache performance with different scenarios
+cd tests/performance_optimization
 python run_performance_optimization.py --cache
+```
 
 # Expected output:
 # Cache Performance:

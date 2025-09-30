@@ -1,6 +1,19 @@
 # Requirements Management Structure
 
-This document explains the new requirements management structure for the mono-repo project.
+# Requirements Management Structure
+
+This document provides a comprehensive guide to the requirements management system used in this mono-repository project.
+
+## 🔐 **SECURITY REQUIREMENTS INTEGRATION** ✨ **UPDATED**
+
+**Security dependencies are now fully integrated into the main requirements structure.**
+
+All security packages from `requirements-security.txt` have been incorporated into the appropriate environment files:
+- **Core security packages** → `build/requirements/base.txt`
+- **Production security tools** → `build/requirements/prod.txt`
+- **Development security tools** → `build/requirements/dev.txt`
+
+**Installation automatically includes security requirements when using environment-specific files.**
 
 ## 📁 Structure Overview
 
@@ -41,7 +54,7 @@ pip install -r build/requirements/prod.txt
 - **Database:** SQLAlchemy, PostgreSQL, Snowflake drivers
 - **Data processing:** Pandas, NumPy
 - **Configuration:** Pydantic, Python-dotenv
-- **Security:** Cryptography, JWT
+- **Security:** ✨ **ENHANCED** - bcrypt, PyJWT, cryptography, passlib, pyotp, qrcode, Pillow, redis, structlog, sentry-sdk\n- **Email services:** aiosmtplib, email-validator\n- **Input validation:** bleach, python-multipart  \n- **Network security:** httpx, certifi, urllib3
 - **Testing:** Pytest, basic testing tools
 - **Code quality:** Black, Flake8, MyPy
 - **Utilities:** Requests, Click
@@ -54,7 +67,7 @@ pip install -r build/requirements/prod.txt
 - **Jupyter ecosystem:** Jupyter, IPython, Notebook
 - **Debugging tools:** IPDB, PDB++
 - **Development server:** Watchdog for file monitoring
-- **Enhanced testing:** Factory Boy, Faker, HTTPX
+- **Enhanced testing:** Factory Boy, Faker (v21.0.0), HTTPX\n- **Security development:** pytest-security for security testing
 - **Documentation:** Sphinx, RTD theme
 - **AWS SDK:** Enabled for local development
 
@@ -70,7 +83,7 @@ pip install -r build/requirements/prod.txt
 **Inherits base.txt plus:**
 - **Production server:** Gunicorn WSGI server
 - **Optimized database:** Compiled psycopg2 (not binary)
-- **Enhanced security:** Locked cryptography versions
+- **Enhanced security:** All security packages from base.txt plus safety, bandit for vulnerability scanning
 - **Production monitoring:** Prometheus client (locked version)
 - **AWS SDK:** Enabled for production cloud operations
 

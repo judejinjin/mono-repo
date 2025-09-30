@@ -3,7 +3,36 @@ Test Runner Script
 Comprehensive test execution with reporting and coverage
 """
 
-#!/usr/bin/env python3
+#!/usr/def run_security_verification():
+    """Run security requirements verification."""
+    print("\\n" + "="*50)
+    print("RUNNING SECURITY REQUIREMENTS VERIFICATION")
+    print("="*50)
+    
+    security_script = PROJECT_ROOT / 'build' / 'verify_security_requirements.py'
+    if not security_script.exists():
+        print("⚠️  Security verification script not found")
+        return {'success': False, 'reason': 'script_not_found'}
+    
+    # Run security verification with development tools check
+    result = run_command([
+        sys.executable, str(security_script), '--development'
+    ])
+    
+    print(f"Security verification result: {'✅ PASSED' if result['success'] else '❌ FAILED'}")
+    if not result['success']:
+        print("Security requirements verification failed!")
+        print("Run the following to install missing security packages:")
+        print("pip install -r build/requirements/dev.txt")
+    
+    return result
+
+
+def run_linting():
+    """Run code linting and style checks."""
+    print("\\n" + "="*50)
+    print("RUNNING LINTING AND STYLE CHECKS")
+    print("="*50)nv python3
 
 import os
 import sys
@@ -345,6 +374,10 @@ def main():
     start_time = time.time()
     
     try:
+        # Always run security verification first for comprehensive test runs
+        if args.test_type == 'all':
+            all_results['security_verification'] = run_security_verification()
+        
         if args.test_type in ['all', 'lint'] and not args.skip_lint:
             lint_results = run_linting()
             all_results.update(lint_results)

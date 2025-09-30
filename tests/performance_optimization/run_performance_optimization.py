@@ -13,11 +13,15 @@ from datetime import datetime
 from pathlib import Path
 
 # Add project root to path
-PROJECT_ROOT = Path(__file__).parent.parent
+PROJECT_ROOT = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
+# Add local libs_performance to path
+LIBS_PERFORMANCE_PATH = Path(__file__).parent / "libs_performance"
+sys.path.insert(0, str(LIBS_PERFORMANCE_PATH))
+
 try:
-    from libs.performance import (
+    from libs_performance import (
         get_cache_manager, get_db_optimizer, get_performance_profiler,
         get_performance_monitor, get_load_tester, get_benchmark_suite,
         get_performance_reporter, performance_monitor, benchmark_suite,
@@ -513,7 +517,7 @@ def main():
     parser.add_argument("--system", action="store_true", help="Run system performance tests")
     parser.add_argument("--load-test", help="Run API load tests (specify base URL)")
     parser.add_argument("--components", action="store_true", help="Benchmark real components")
-    parser.add_argument("--async", action="store_true", help="Run async performance tests")
+    parser.add_argument("--async", dest="async_tests", action="store_true", help="Run async performance tests")
     parser.add_argument("--monitor", type=int, metavar="MINUTES", help="Run monitoring test for N minutes")
     parser.add_argument("--all", action="store_true", help="Run all performance tests")
     parser.add_argument("--cleanup", action="store_true", help="Cleanup memory after tests")
@@ -521,7 +525,7 @@ def main():
     args = parser.parse_args()
     
     if not any([args.cache, args.database, args.system, args.load_test, 
-                args.components, args.async, args.monitor, args.all]):
+                args.components, args.async_tests, args.monitor, args.all]):
         parser.print_help()
         return
     
@@ -544,7 +548,7 @@ def main():
         if args.all or args.components:
             runner.run_real_component_benchmarks()
         
-        if args.all or args.async:
+        if args.all or args.async_tests:
             asyncio.run(runner.run_async_performance_tests())
         
         if args.monitor or args.all:

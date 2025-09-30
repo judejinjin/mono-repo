@@ -17,7 +17,11 @@ import uvicorn
 from contextlib import asynccontextmanager
 
 # Performance optimization imports
-from libs.performance import (
+import sys
+from pathlib import Path
+# Add performance optimization libs to path
+sys.path.insert(0, str(Path(__file__).parent.parent / "tests" / "performance_optimization" / "libs_performance"))
+from libs_performance import (
     get_cache_manager, get_performance_profiler, get_async_task_manager,
     performance_monitor, cleanup_memory
 )
